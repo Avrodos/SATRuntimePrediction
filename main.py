@@ -1,14 +1,17 @@
 import math
+import sys
 from typing import Final, Any
 import os
 import networkit as nk
 import pandas as pd
 import time
 
-SRC_DIR: Final[str] = "data/benchmarked_instances/"
+SRC_DIR: Final[str] = sys.argv[1]
 GRAPH_OUTPUT_DIR: Final[str] = "data/created_vigs/"
-MEASURED_OUTPUT_DIR: Final[str] = "data/measured_data"
+MEASURED_OUTPUT_DIR: Final[str] = "data/measured_data/"
 GRAPH_FORMATS: Final = {'EdgeListSpaceOne', 'METIS', 'ThrillBinary', 'NetworkitBinary'}
+TIME_ENDING: Final[str] = "_time_taken_to_write_graph.csv"
+SIZE_ENDING: Final[str] = "_size_taken_to_write_graph.csv"
 
 
 # creates and returns a VIG from a file
@@ -18,7 +21,7 @@ def create_vig_from_file(path: str):
         for line in file:
             words = line.split()
             # ignore comments and unit clauses
-            if words[0] == str('c') or len(words) <= 2:
+            if len(words) <= 2 or words[0] == str('c'):
                 continue
             # since each line has a '0' as EOL we have to rem 1 from len
             bin_coeff = math.comb(len(words) - 1, 2)
@@ -48,9 +51,7 @@ def test_graph_formats(test_graph, output_path):
     if not os.path.isdir(GRAPH_OUTPUT_DIR):
         os.makedirs(GRAPH_OUTPUT_DIR)
     # example_path: str = OUTPUT_PATH + "000a41cdca43be89ed62ea3abf2d0b64-snw_13_9_pre"
-
-    local_df = pd.DataFrame(columns=GRAPH_FORMATS)
-    result = [[],[]]
+    result = [[], []]
     time_row = []
     file_size_row = []
 
@@ -83,27 +84,29 @@ def test_graph_formats(test_graph, output_path):
     return result
 
 
+# script receives file path  of a .cnf as input parameter
 if __name__ == '__main__':
     time_df = pd.DataFrame(columns=GRAPH_FORMATS)
     size_df = pd.DataFrame(columns=GRAPH_FORMATS)
-    file_list = sorted(os.listdir(SRC_DIR))
-    # we are testing 25 files for now
-    for curr_file in file_list:
-        print("Current File Being Processed is: " + curr_file)
-        full_src_path = SRC_DIR + curr_file
-        graph = create_vig_from_file(full_src_path)
-        print(graph.numberOfNodes(), graph.numberOfEdges())
-        # to strip ending of file path, e.g. '.cnf'
-        full_output_path = os.path.splitext(GRAPH_OUTPUT_DIR + curr_file)[0]
-        # func result contains a list of lists.
-        # 1 list of time data and then 1 list of file size data
-        file_save_list = test_graph_formats(graph, full_output_path)
-        # append row to df, use loc to access individual rows
-        time_df.loc[len(time_df)] = file_save_list[0]
-        size_df.loc[len(size_df)] = file_save_list[1]
+    #curr_file = sys.argv[1]
+    #print("Current File Being Processed is: " + curr_file)
+    #full_src_path = SRC_DIR + curr_file
+    graph = create_vig_from_file(SRC_DIR)
+    print(graph.numberOfNodes(), graph.numberOfEdges())
+    # to strip ending of file path, e.g. '.cnf'
+    file_name = os.path.basename(SRC_DIR)
+    file_name_without_ending = os.path.splitext(file_name)[0]
+    full_output_path = GRAPH_OUTPUT_DIR + file_name_without_ending
+    # func result contains a list of lists.
+    # 1 list of time data and then 1 list of file size data
+    file_save_list = test_graph_formats(graph, full_output_path)
+    # append row to df, use loc to access individual rows
+    time_df.loc[len(time_df)] = file_save_list[0]
+    size_df.loc[len(size_df)] = file_save_list[1]
     # save to csv
-    time_df.to_csv(MEASURED_OUTPUT_DIR + "time_taken_to_write_graph.csv")
-    size_df.to_csv(MEASURED_OUTPUT_DIR + "size_taken_to_write_graph.csv")
+    os.makedirs(os.path.dirname(MEASURED_OUTPUT_DIR), exist_ok=True)
+    time_df.to_csv(MEASURED_OUTPUT_DIR + file_name_without_ending + TIME_ENDING)
+    size_df.to_csv(MEASURED_OUTPUT_DIR + file_name_without_ending + SIZE_ENDING)
 
 # TODO: use hash (first part of the filename) as id
 # collect data during feature extraction: how long does it take to compute a feature
