@@ -1,6 +1,6 @@
 import math
 import sys
-from typing import Final, Any
+from typing import Final
 import os
 import networkit as nk
 import pandas as pd
@@ -47,6 +47,7 @@ def create_vig_from_file(path: str):
 
 
 # tests to decide on a format
+# noinspection PyTypeChecker
 def test_graph_formats(test_graph, output_path):
     if not os.path.isdir(GRAPH_OUTPUT_DIR):
         os.makedirs(GRAPH_OUTPUT_DIR)
@@ -88,9 +89,9 @@ def test_graph_formats(test_graph, output_path):
 if __name__ == '__main__':
     time_df = pd.DataFrame(columns=GRAPH_FORMATS)
     size_df = pd.DataFrame(columns=GRAPH_FORMATS)
-    #curr_file = sys.argv[1]
-    #print("Current File Being Processed is: " + curr_file)
-    #full_src_path = SRC_DIR + curr_file
+    # curr_file = sys.argv[1]
+    # print("Current File Being Processed is: " + curr_file)
+    # full_src_path = SRC_DIR + curr_file
     graph = create_vig_from_file(SRC_DIR)
     print(graph.numberOfNodes(), graph.numberOfEdges())
     # to strip ending of file path, e.g. '.cnf'

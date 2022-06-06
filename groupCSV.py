@@ -34,4 +34,3 @@ if __name__ == '__main__':
     output_path = os.getcwd()
     time_df.to_csv(output_path + "/" + TIME_FILE_NAME)
     time_df.to_csv(output_path + "/" + SIZE_FILE_NAME)
-
