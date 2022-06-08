@@ -5,6 +5,8 @@ import os
 import networkit as nk
 import pandas as pd
 import time
+import matplotlib.pyplot as plt
+import groupCSV
 
 SRC_DIR: Final[str] = sys.argv[1]
 GRAPH_OUTPUT_DIR: Final[str] = "data/created_vigs/"
@@ -85,6 +87,20 @@ def test_graph_formats(test_graph, output_path):
     return result
 
 
+def evaluate_graph_formats(size_table_path, time_table_path):
+    if os.path.isfile(size_table_path) and os.path.isfile(time_table_path):
+        read_time_df = pd.read_csv(time_table_path, index_col=0)
+        read_size_df = pd.read_csv(size_table_path, index_col=0)
+        time_boxplot = read_time_df.boxplot(showmeans=True)
+        time_boxplot.set_ylabel('Time in s')
+        plt.title('Graph-Format Comparison of Writing-Times')
+        plt.show()
+        size_boxplot = read_size_df.boxplot(showmeans=True)
+        size_boxplot.set_ylabel('File size in Bytes')
+        plt.title('Graph-Format Comparison of File Sizes')
+        plt.show()
+
+
 # script receives file path  of a .cnf as input parameter
 if __name__ == '__main__':
     time_df = pd.DataFrame(columns=GRAPH_FORMATS)
@@ -109,6 +125,9 @@ if __name__ == '__main__':
     time_df.to_csv(MEASURED_OUTPUT_DIR + file_name_without_ending + TIME_ENDING)
     size_df.to_csv(MEASURED_OUTPUT_DIR + file_name_without_ending + SIZE_ENDING)
 
+    size_csv_path = "data/measured_data/size_taken_to_write_graph.csv"
+    time_csv_path = "data/measured_data/time_taken_to_write_graph.csv"
+    evaluate_graph_formats(size_csv_path, time_csv_path)
 # TODO: use hash (first part of the filename) as id
 # collect data during feature extraction: how long does it take to compute a feature
 # save features in a csv for instance

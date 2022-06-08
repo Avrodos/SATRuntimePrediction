@@ -8,8 +8,8 @@ SRC_DIR: Final[str] = sys.argv[1]
 TIME_ENDING: Final[str] = "_time_taken_to_write_graph.csv"
 SIZE_ENDING: Final[str] = "_size_taken_to_write_graph.csv"
 COLUMNS: Final = ['NetworkitBinary', 'METIS', 'EdgeListSpaceOne', 'ThrillBinary']
-TIME_FILE_NAME: Final[str] = "time_taken_to_write_graph.csv"
-SIZE_FILE_NAME: Final[str] = "size_taken_to_write_graph.csv"
+TIME_FILE_NAME: Final[str] = "time_taken_to_write_graph2.csv"
+SIZE_FILE_NAME: Final[str] = "size_taken_to_write_graph2.csv"
 
 # receives directory of the CSV's that have to be grouped
 # outputs one CSV for time data and one CSV for size data
@@ -33,4 +33,4 @@ if __name__ == '__main__':
     # write results to CSV's
     output_path = os.getcwd()
     time_df.to_csv(output_path + "/" + TIME_FILE_NAME)
-    time_df.to_csv(output_path + "/" + SIZE_FILE_NAME)
+    size_df.to_csv(output_path + "/" + SIZE_FILE_NAME)
