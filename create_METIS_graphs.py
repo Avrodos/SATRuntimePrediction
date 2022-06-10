@@ -70,7 +70,7 @@ if __name__ == '__main__':
     graph = create_vig_from_file(SRC_DIR)
     time_create_graph = time.process_time() - time_start
     print(graph.numberOfNodes(), graph.numberOfEdges())
-    print("Time taken to create graph: %f", time_create_graph)
+    print("Time taken to create graph: " + str(time_create_graph))
 
     time_start = time.process_time()
     file_size = write_graph_to_METIS(graph, full_output_path)
