@@ -5,6 +5,7 @@ from typing import Final
 import networkit as nk
 import numpy as np
 import pandas as pd
+import networkx as nx
 
 SRC_DIR: Final[str] = sys.argv[1]
 FEATURE_OUTPUT_DIR: Final[str] = 'data/measured_data/'
@@ -84,7 +85,7 @@ def calculate_centrality(given_graph):
 
 
 # calculates community measures
-# returns a df
+# returns two df: data_df & time_data_df
 def calculate_community(given_graph):
     time_start = time.process_time()
     communities = nk.community.detectCommunities(given_graph)
@@ -130,7 +131,7 @@ def calculate_community(given_graph):
 
 
 # calculates clustering coefficients
-# returns a df
+# returns two df: data_df & time_data_df
 def calculate_clustering(given_graph):
     time_start = time.process_time()
     global_clustering_coefficient = nk.globals.clustering(given_graph)
@@ -139,6 +140,55 @@ def calculate_clustering(given_graph):
     # putting it into two df
     data_df = pd.DataFrame({'GlobalClusteringCoefficient': [global_clustering_coefficient]})
     time_df = pd.DataFrame({'Time_GlobalClusteringCoefficient': [time_clustering]})
+    return data_df, time_df
+
+
+# calculates the diameter measures of the largest connected component in the graph
+# returns two df: data_df & time_data_df
+def calculate_diameters(given_graph):
+    time_start = time.process_time()
+    # if the graph is not connected, diameter would be inf
+    # therefore extract largest connected component first
+    largest_con_comp = nk.components.ConnectedComponents.extractLargestConnectedComponent(given_graph, True)
+    # Initialize algorithm to compute the diameter of the input graph
+    diam = nk.distance.Diameter(largest_con_comp)
+    diam.run()
+    diameter = diam.getDiameter()
+    time_diameter = time.process_time() - time_start
+
+    # approximates effective diameter, which is defined as the number of edges on average to reach a
+    # given ratio (def: 0.9) of all other nodes
+    time_start = time.process_time()
+    eda = nk.distance.EffectiveDiameterApproximation(largest_con_comp)
+    eda.run()
+    effective_diameter_approx = eda.getEffectiveDiameter()
+    time_effective_diameter_approx = time.process_time() - time_start
+
+    # putting it into two df
+    data_df = pd.DataFrame({'Diameter': [diameter], 'EffectiveDiameterApproximation': [effective_diameter_approx]})
+    time_df = pd.DataFrame({'Time_Diameter': [time_diameter],
+                            'Time_EffectiveDiameterApproximation': [time_effective_diameter_approx]})
+    return data_df, time_df
+
+
+def calculate_small_world(given_graph):
+    time_start = time.process_time()
+    nx_graph = nk.nxadapter.nk2nx(given_graph) # convert from NetworKit.Graph to networkx.Graph
+    time_graph_conversion = time.process_time() - time_start
+
+    time_start = time.process_time()
+    # graph is commonly classified as small-world for sigma > 1
+    sigma = nx.sigma(nx_graph)
+    time_sigma = time_graph_conversion + time.process_time() - time_start
+
+    time_start = time.process_time()
+    # graph is commonly classified as small-world for omega close to 0
+    omega = nx.omega(nx_graph)
+    time_omega = time_graph_conversion + time.process_time() - time_start
+
+    # putting it into two df
+    data_df = pd.DataFrame({'SmallWorldSigma': [sigma], 'SmallWorldOmega': [omega]})
+    time_df = pd.DataFrame({'Time_SmallWorldSigma': [time_sigma], 'Time_SmallWorldOmega': [time_omega]})
     return data_df, time_df
 
 
@@ -172,6 +222,12 @@ if __name__ == '__main__':
 
     # clustering coefficients
     clustering_features, time_clustering_features = calculate_clustering(graph)
+
+    # graph diameters
+    diameter_features, time_diameter_features = calculate_diameters(graph)
+
+    # small-world measures
+    small_world_features, time_small_world_features = calculate_small_world(graph)
 
     # put it all into corresponding dataframes
     feature_df = pd.concat([feature_df, component_features,
