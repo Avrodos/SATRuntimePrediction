@@ -19,7 +19,6 @@ TIME_FILE_ENDING: Final[str] = '_time'
 # fastest entropy calculation taken from:
 # https://stackoverflow.com/questions/15450192/fastest-way-to-compute-entropy-in-python
 def calculate_entropy(given_array, base=None):
-
     len_array = len(given_array)
 
     if len_array <= 1:
@@ -41,23 +40,20 @@ def calculate_entropy(given_array, base=None):
 
     return ent
 
+
 # A connected component is a set of nodes in which each pair of nodes is connected by a path.
 # returns two df: data_df & time_data_df
 def calculate_components(given_graph):
     time_start = time.process_time()
-    connected_components = nk.components.ConnectedComponents(given_graph)
-    connected_components.run()
+    num_connected_components = nk.components.ConnectedComponents(given_graph).run().numberOfComponents()
     time_connected_components = time.process_time() - time_start
 
-    data_df = pd.DataFrame({'#ConnectedComponents': [connected_components.numberOfComponents()]})
+    data_df = pd.DataFrame({'#ConnectedComponents': [num_connected_components]})
     time_df = pd.DataFrame({'Time_#ConnectedComponents': [time_connected_components]})
     return data_df, time_df
 
-# TODO: degree assortativity
 
 # TODO: graph core
-
-# TODO: Also calculate edge cut fraction
 
 # calculates centrality measures
 # a distribution is measured using 5 stats:
@@ -68,6 +64,7 @@ def calculate_centrality(given_graph):
     deg_cen = nk.centrality.DegreeCentrality(given_graph)
     deg_cen.run()
 
+    # Degree Centrality
     np_array_deg_cen = np.array(deg_cen.scores(), float)
     mean_deg_cen = np.mean(np_array_deg_cen)
     min_deg_cen = np.min(np_array_deg_cen)
@@ -76,10 +73,17 @@ def calculate_centrality(given_graph):
     entropy_deg_cen = calculate_entropy(np_array_deg_cen)
     time_deg_cen = time.process_time() - time_start
 
+    # Degree Assortativity
+    time_start = time.process_time()
+    deg_assortativity = nk.correlation.Assortativity(given_graph, deg_cen.scores()).run().getCoefficient()
+    time_deg_assortativity = time.process_time() + time_deg_cen - time_start
+
+    # Centralization
     time_start = time.process_time()
     centralization = deg_cen.centralization()
     time_centralization = time.process_time() - time_start
 
+    # Eigenvector Centrality
     time_start = time.process_time()
     eigenvector_cen = nk.centrality.EigenvectorCentrality(given_graph)
     eigenvector_cen.run()
@@ -91,6 +95,7 @@ def calculate_centrality(given_graph):
     entropy_eigenvector_cen = calculate_entropy(np_array_eigenvector_cen)
     time_eigenvector_cen = time.process_time() - time_start
 
+    # Page Rank
     time_start = time.process_time()
     page_rank = nk.centrality.PageRank(given_graph)
     page_rank.run()
@@ -102,6 +107,7 @@ def calculate_centrality(given_graph):
     entropy_page_rank = calculate_entropy(np_array_page_rank)
     time_page_rank = time.process_time() - time_start
 
+    # Katz Centrality
     time_start = time.process_time()
     katz_cen = nk.centrality.KatzCentrality(given_graph)
     katz_cen.run()
@@ -113,6 +119,7 @@ def calculate_centrality(given_graph):
     entropy_katz_cen = calculate_entropy(np_array_katz_cen)
     time_katz_cen = time.process_time() - time_start
 
+    # Betweenness Centrality
     time_start = time.process_time()
     betweenness_cen = nk.centrality.EstimateBetweenness(given_graph, 50)  # (graph, nSamples)
     betweenness_cen.run()
@@ -132,6 +139,7 @@ def calculate_centrality(given_graph):
         'VarDegreeCentrality': [var_deg_cen],
         'EntropyDegreeCentrality': [entropy_deg_cen],
 
+        'DegreeAssortativity': [deg_assortativity],
         'Centralization': [centralization],
 
         'MeanEigenvectorCentrality': [mean_eigenvector_cen],
@@ -161,10 +169,11 @@ def calculate_centrality(given_graph):
 
     time_data = {
         'Time_DegreeCentrality': [time_deg_cen],
+        'Time_DegreeAssortativity': [time_deg_assortativity],
         'Time_Centralization': [time_centralization],
         'Time_EigenvectorCentrality': [time_eigenvector_cen],
         'Time_PageRank': [time_page_rank],
-        'Time_KatzCentrality': [mean_katz_cen],
+        'Time_KatzCentrality': [time_katz_cen],
         'Time_BetweennessCentrality': [time_betweenness_cen]
     }
     return pd.DataFrame(data), pd.DataFrame(time_data)
@@ -173,10 +182,12 @@ def calculate_centrality(given_graph):
 # calculates community measures
 # returns two df: data_df & time_data_df
 def calculate_community(given_graph):
+    # partition into communities
     time_start = time.process_time()
     communities = nk.community.detectCommunities(given_graph)
     time_communities = time.process_time() - time_start
 
+    # Community Measurements
     time_start = time.process_time()
     num_communities = communities.numberOfElements()
     np_array_community_size = np.array(communities.subsetSizes(), float)
@@ -187,26 +198,45 @@ def calculate_community(given_graph):
     entropy_community_size = calculate_entropy(np_array_community_size)
     time_community_size = time_communities + time.process_time() - time_start
 
+    # Graph Imbalance
     time_start = time.process_time()
     imbalance = nk.community.GraphClusteringTools().getImbalance(communities)
     time_imbalance = time_communities + time.process_time() - time_start
 
+    # Check whether community partition is a proper clustering
     time_start = time.process_time()
-    intercommunity_edge_weight = nk.community.EdgeCut().getQuality(communities, given_graph)
-    time_intercommunity_edge_weight = time_communities + time.process_time() - time_start
+    is_proper_clustering = nk.community.GraphClusteringTools().isProperClustering(given_graph, communities)
+    time_is_proper_clustering = time_communities + time.process_time() - time_start
 
+    # Check whether community partition is a singleton clustering
+    time_start = time.process_time()
+    is_singleton_clustering = nk.community.GraphClusteringTools().isSingletonClustering(given_graph, communities)
+    time_is_singleton_clustering = time_communities + time.process_time() - time_start
+
+    # Check whether community partition is a One Clustering
+    time_start = time.process_time()
+    is_one_clustering = nk.community.GraphClusteringTools().isOneClustering(given_graph, communities)
+    time_is_one_clustering = time_communities + time.process_time() - time_start
+
+    # Edge cut = total weight of intercommunity edges, Edge cut fraction = the fraction compared to total num of edges
+    time_start = time.process_time()
+    edge_cut = nk.community.EdgeCut().getQuality(communities, given_graph)
+    edge_cut_fraction = edge_cut / given_graph.numberOfEdges()
+    time_edge_cut = time_communities + time.process_time() - time_start
+
+    # Community Modularity
     time_start = time.process_time()
     modularity = nk.community.Modularity().getQuality(communities, given_graph)
     time_modularity = time_communities + time.process_time() - time_start
 
+    # Hub Dominance
     time_start = time.process_time()
     hub_dominance = nk.community.HubDominance().getQuality(communities, given_graph)
     time_hub_dominance = time_communities + time.process_time() - time_start
 
+    # Intrapartition Density
     time_start = time.process_time()
-    intrapartition_density_algo = nk.community.IntrapartitionDensity(given_graph, communities)
-    intrapartition_density_algo.run()
-    global_intrapartition_density = intrapartition_density_algo.getGlobal()
+    global_intrapartition_density = nk.community.IntrapartitionDensity(given_graph, communities).run().getGlobal()
     time_intrapartition_density = time_communities + time.process_time() - time_start
 
     # putting it all into two df
@@ -218,7 +248,11 @@ def calculate_community(given_graph):
         'VarCommunitySize': [var_community_size],
         'EntropyCommunitySize': [entropy_community_size],
         'ClusterImbalance': [imbalance],
-        'TotalInter-CommunityEdgeWeight': [intercommunity_edge_weight],
+        'IsProperClustering': [is_proper_clustering],
+        'IsSingletonClustering': [is_singleton_clustering],
+        'IsOneClustering': [is_one_clustering],
+        'EdgeCut': [edge_cut],
+        'EdgeCutFraction': [edge_cut_fraction],
         'Modularity': [modularity],
         'HubDominance': [hub_dominance],
         'GlobalIntrapartitionDensity': [global_intrapartition_density]
@@ -228,7 +262,10 @@ def calculate_community(given_graph):
         'Time_#Communities': [time_communities],
         'Time_CommunitySize': [time_community_size],
         'Time_ClusterImbalance': [time_imbalance],
-        'Time_TotalInter-CommunityEdgeWeight': [time_intercommunity_edge_weight],
+        'Time_IsProperClustering': [time_is_proper_clustering],
+        'Time_IsSingletonClustering': [time_is_singleton_clustering],
+        'Time_IsOneClustering': [time_is_one_clustering],
+        'Time_EdgeCut': [time_edge_cut],
         'Time_Modularity': [time_modularity],
         'Time_HubDominance': [time_hub_dominance],
         'Time_GlobalIntrapartitionDensity': [time_intrapartition_density]
@@ -237,13 +274,13 @@ def calculate_community(given_graph):
 
 
 # calculates clustering coefficients
+# note: some clustering measurements depend on a partition and are therefore calculated in 'calculate_community'
 # returns two df: data_df & time_data_df
 def calculate_clustering(given_graph):
     time_start = time.process_time()
     global_clustering_coefficient = nk.globals.clustering(given_graph)
     time_clustering = time.process_time() - time_start
 
-    # TODO: more clustering coefficients
     # putting it into two df
     data_df = pd.DataFrame({'GlobalClusteringCoefficient': [global_clustering_coefficient]})
     time_df = pd.DataFrame({'Time_GlobalClusteringCoefficient': [time_clustering]})
@@ -257,18 +294,15 @@ def calculate_diameters(given_graph):
     # if the graph is not connected, diameter would be inf
     # therefore extract largest connected component first
     largest_con_comp = nk.components.ConnectedComponents.extractLargestConnectedComponent(given_graph, True)
-    # Initialize algorithm to compute the diameter of the input graph
-    diam = nk.distance.Diameter(largest_con_comp)
-    diam.run()
-    diameter = diam.getDiameter()
+
+    # Compute the diameter of the input graph
+    diameter = nk.distance.Diameter(largest_con_comp).run().getDiameter()
     time_diameter = time.process_time() - time_start
 
     # approximates effective diameter, which is defined as the number of edges on average to reach a
     # given ratio (def: 0.9) of all other nodes
     time_start = time.process_time()
-    eda = nk.distance.EffectiveDiameterApproximation(largest_con_comp)
-    eda.run()
-    effective_diameter_approx = eda.getEffectiveDiameter()
+    effective_diameter_approx = nk.distance.EffectiveDiameterApproximation(largest_con_comp).run().getEffectiveDiameter()
     time_effective_diameter_approx = time.process_time() - time_start
 
     # putting it into two df
