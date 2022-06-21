@@ -295,8 +295,8 @@ def calculate_diameters(given_graph):
     # therefore extract largest connected component first
     largest_con_comp = nk.components.ConnectedComponents.extractLargestConnectedComponent(given_graph, True)
 
-    # Compute the diameter of the input graph
-    diameter = nk.distance.Diameter(largest_con_comp).run().getDiameter()
+    # Compute the exact diameter of the input graph
+    diameter = nk.distance.Diameter(largest_con_comp).run().getDiameter()[0]
     time_diameter = time.process_time() - time_start
 
     # approximates effective diameter, which is defined as the number of edges on average to reach a

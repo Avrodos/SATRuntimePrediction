@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import groupCSV
 
 SRC_DIR: Final[str] = sys.argv[1]
-GRAPH_OUTPUT_DIR: Final[str] = "data/created_vigs/"
-MEASURED_OUTPUT_DIR: Final[str] = "data/measured_data/"
+GRAPH_OUTPUT_DIR: Final[str] = "../data/created_vigs/"
+MEASURED_OUTPUT_DIR: Final[str] = "../data/measured_data/"
 GRAPH_FORMATS: Final = {'EdgeListSpaceOne', 'METIS', 'ThrillBinary', 'NetworkitBinary'}
 TIME_ENDING: Final[str] = "_time_taken_to_write_graph.csv"
 SIZE_ENDING: Final[str] = "_size_taken_to_write_graph.csv"

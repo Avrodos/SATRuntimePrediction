@@ -38,6 +38,6 @@ def evaluate_graph_formats(size_table_path, time_table_path):
 
 # script takes in the measured time and size for diff. graph formats and creates boxplots for evaluation
 if __name__ == '__main__':
-    size_csv_path = "data/measured_data/size_taken_to_write_graph.csv"
-    time_csv_path = "data/measured_data/time_taken_to_write_graph.csv"
+    size_csv_path = "../data/measured_data/size_taken_to_write_graph.csv"
+    time_csv_path = "../data/measured_data/time_taken_to_write_graph.csv"
     evaluate_graph_formats(size_csv_path, time_csv_path)
