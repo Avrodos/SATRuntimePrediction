@@ -3,6 +3,7 @@
 import math
 import os
 import sys
+from os.path import exists
 from typing import Final
 import networkit as nk
 import time
@@ -49,19 +50,19 @@ def create_vig_from_file(path: str):
 def write_graph_to_METIS(test_graph, output_path):
     if not os.path.isdir(GRAPH_OUTPUT_DIR):
         os.makedirs(GRAPH_OUTPUT_DIR)
-    # example_path: str = OUTPUT_PATH + "000a41cdca43be89ed62ea3abf2d0b64-snw_13_9_pre"
-
-    graph_file = output_path + "_METIS"
-    nk.writeGraph(test_graph, graph_file, nk.Format.METIS)
-    return os.path.getsize(graph_file)
+    # example_path: str = OUTPUT_PATH + $id + _METIS
+    nk.writeGraph(test_graph, output_path, nk.Format.METIS)
+    return os.path.getsize(output_path)
 
 
-# script receives file path  of a .cnf as input parameter
-if __name__ == '__main__':
+def main():
     # to strip ending of file path, e.g. '.cnf'
     file_name = os.path.basename(SRC_DIR)
     file_name_without_ending = os.path.splitext(file_name)[0]
-    full_output_path = GRAPH_OUTPUT_DIR + file_name_without_ending
+    full_output_path = GRAPH_OUTPUT_DIR + file_name_without_ending + "_METIS"
+    # first check if we already created the file in a previous run
+    if os.path.exists(full_output_path):
+        return
     # we will use the file names for the id during the rest of the project
     current_id = file_name_without_ending
     # we will measure time from reading the cnf to creating the graph
@@ -87,3 +88,8 @@ if __name__ == '__main__':
     # save to csv
     os.makedirs(os.path.dirname(MEASURED_OUTPUT_DIR), exist_ok=True)
     df.to_csv(MEASURED_OUTPUT_DIR + file_name_without_ending + FILE_ENDING)
+
+
+# script receives file path  of a .cnf as input parameter
+if __name__ == '__main__':
+    main()
