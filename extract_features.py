@@ -6,7 +6,7 @@ from typing import Final
 import networkit as nk
 import numpy as np
 import pandas as pd
-import networkx as nx
+# import networkx as nx
 
 SRC_DIR: Final[str] = sys.argv[1]
 FEATURE_OUTPUT_DIR: Final[str] = 'data/measured_data/'
@@ -312,30 +312,29 @@ def calculate_diameters(given_graph):
     return data_df, time_df
 
 
-# Takes too long for current purpose
-def calculate_small_world(given_graph):
-    time_start = time.process_time()
-    nx_graph = nk.nxadapter.nk2nx(given_graph)  # convert from NetworKit.Graph to networkx.Graph
-    time_graph_conversion = time.process_time() - time_start
+# # Takes too long for current purpose
+# def calculate_small_world(given_graph):
+#     time_start = time.process_time()
+#     nx_graph = nk.nxadapter.nk2nx(given_graph)  # convert from NetworKit.Graph to networkx.Graph
+#     time_graph_conversion = time.process_time() - time_start
+#
+#     time_start = time.process_time()
+#     # graph is commonly classified as small-world for sigma > 1
+#     sigma = nx.sigma(nx_graph)
+#     time_sigma = time_graph_conversion + time.process_time() - time_start
+#
+#     time_start = time.process_time()
+#     # graph is commonly classified as small-world for omega close to 0
+#     omega = nx.omega(nx_graph)
+#     time_omega = time_graph_conversion + time.process_time() - time_start
+#
+#     # putting it into two df
+#     data_df = pd.DataFrame({'SmallWorldSigma': [], 'SmallWorldOmega': [omega]})
+#     time_df = pd.DataFrame({'Time_SmallWorldSigma': [], 'Time_SmallWorldOmega': [time_omega]})
+#     return data_df, time_df
 
-    time_start = time.process_time()
-    # graph is commonly classified as small-world for sigma > 1
-    sigma = nx.sigma(nx_graph)
-    time_sigma = time_graph_conversion + time.process_time() - time_start
 
-    time_start = time.process_time()
-    # graph is commonly classified as small-world for omega close to 0
-    omega = nx.omega(nx_graph)
-    time_omega = time_graph_conversion + time.process_time() - time_start
-
-    # putting it into two df
-    data_df = pd.DataFrame({'SmallWorldSigma': [], 'SmallWorldOmega': [omega]})
-    time_df = pd.DataFrame({'Time_SmallWorldSigma': [], 'Time_SmallWorldOmega': [time_omega]})
-    return data_df, time_df
-
-
-# script receives file path  of a METIS graph as input parameter
-if __name__ == '__main__':
+def main():
     # to strip ending of file path, e.g. '.cnf' or '.csv'
     file_name = os.path.basename(SRC_DIR)
     file_name_without_ending = os.path.splitext(file_name)[0]
@@ -343,11 +342,14 @@ if __name__ == '__main__':
     current_id = file_name_without_ending.replace('_METIS', '')
     full_output_path_features = FEATURE_OUTPUT_DIR + current_id + FEATURE_FILE_ENDING
     full_output_path_time = FEATURE_OUTPUT_DIR + current_id + TIME_FILE_ENDING
+    # check whether the given file already exists
+    if os.path.exists(full_output_path_features):
+        return
 
     # read the graph from file
     main_time_start = time.process_time()
-    metisReader = nk.graphio.METISGraphReader()
-    graph = metisReader.read(SRC_DIR)
+    metis_reader = nk.graphio.METISGraphReader()
+    graph = metis_reader.read(SRC_DIR)
     num_nodes = graph.numberOfNodes()
     num_edges = graph.numberOfEdges()
     time_read_graph = time.process_time() - main_time_start
@@ -389,3 +391,8 @@ if __name__ == '__main__':
     time_feature_df.to_csv(full_output_path_time)
     print(feature_df)
     print(time_feature_df)
+
+
+# script receives file path  of a METIS graph as input parameter
+if __name__ == '__main__':
+    main()
