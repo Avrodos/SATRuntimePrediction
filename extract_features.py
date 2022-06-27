@@ -371,20 +371,20 @@ def main():
     # clustering coefficients
     clustering_features, time_clustering_features = calculate_clustering(graph)
 
-    # graph diameters
-    diameter_features, time_diameter_features = calculate_diameters(graph)
+    # graph diameters - currently takes too long
+    # diameter_features, time_diameter_features = calculate_diameters(graph)
 
-    # small-world measures
+    # small-world measures - currently takes too long
     # small_world_features, time_small_world_features = calculate_small_world(graph)
 
     # put it all into corresponding dataframes
     feature_df = pd.concat([feature_df, component_features,
-                            centrality_features, community_features, clustering_features, diameter_features], axis=1)
+                            centrality_features, community_features, clustering_features], axis=1)
     feature_df.set_index('ID', inplace=True)
 
     time_feature_df = pd.concat(
         [time_feature_df, time_component_features, time_centrality_features, time_community_features,
-         time_clustering_features, time_diameter_features], axis=1)
+         time_clustering_features], axis=1)
     time_feature_df.set_index('ID', inplace=True)
 
     feature_df.to_csv(full_output_path_features)
