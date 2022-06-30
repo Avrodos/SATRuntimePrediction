@@ -1,4 +1,6 @@
+import gzip
 import os
+import shutil
 import sys
 import time
 from math import e, log
@@ -342,14 +344,20 @@ def main():
     current_id = file_name_without_ending.replace('_METIS', '')
     full_output_path_features = FEATURE_OUTPUT_DIR + current_id + FEATURE_FILE_ENDING
     full_output_path_time = FEATURE_OUTPUT_DIR + current_id + TIME_FILE_ENDING
+    unzipped_file_path = os.path.splitext(SRC_DIR)[0]
     # check whether the given file already exists
     if os.path.exists(full_output_path_features):
         return
 
+    #unzip first
+    with gzip.open(SRC_DIR, 'rb') as f_in:
+        with open(unzipped_file_path, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
     # read the graph from file
     main_time_start = time.process_time()
     metis_reader = nk.graphio.METISGraphReader()
-    graph = metis_reader.read(SRC_DIR)
+    graph = metis_reader.read(unzipped_file_path)
     num_nodes = graph.numberOfNodes()
     num_edges = graph.numberOfEdges()
     time_read_graph = time.process_time() - main_time_start
@@ -390,7 +398,10 @@ def main():
     feature_df.to_csv(full_output_path_features)
     time_feature_df.to_csv(full_output_path_time)
     print(feature_df)
-    print(time_feature_df)
+
+    # delete unzipped file again
+    if os.path.exists(unzipped_file_path):
+        os.remove(unzipped_file_path)
 
 
 # script receives file path  of a METIS graph as input parameter
