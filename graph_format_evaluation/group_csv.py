@@ -3,23 +3,22 @@ import sys
 from typing import Final
 import pandas as pd
 
-COLUMNS: Final = ['ID', 'Time to create graph', 'Time to write graph', 'Space Needed']
-FILE_ENDING: Final[str] = "_time_and_size_data.csv"
+FILE_ENDING: Final[str] = "_features"
 SRC_DIR: Final[str] = sys.argv[1]
 
 # receives directory of the CSV's that have to be grouped
-# outputs one CSV for time data and one CSV for size data
+# outputs one CSV with all data
 if __name__ == '__main__':
     files = os.listdir(SRC_DIR)
-    df = pd.DataFrame(columns=COLUMNS)
+    df = pd.DataFrame()
 
     for file in files:
         full_path = os.path.join(SRC_DIR, file)
         if os.path.isfile(full_path) and file.endswith(FILE_ENDING):
             temp_df = pd.read_csv(full_path)
             df = pd.concat([df, temp_df])
-    df.set_index(COLUMNS[0], inplace=True)
+    df.set_index('ID', inplace=True)
 
     # write results to CSV's
     output_path = os.getcwd()
-    df.to_csv(output_path + "/" + FILE_ENDING[1:])
+    df.to_csv(output_path + "/" + "SAT_" + FILE_ENDING[1:])

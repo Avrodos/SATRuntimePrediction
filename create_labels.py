@@ -3,7 +3,6 @@ from typing import Final
 
 import numpy as np
 import pandas as pd
-from numpy import ma
 
 SRC_DIR: Final[str] = sys.argv[1]
 LABEL_FILE_NAME: Final[str] = 'runtime_labels.csv'
