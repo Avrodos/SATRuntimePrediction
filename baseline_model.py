@@ -15,11 +15,14 @@ def main():
     np.random.seed(0)
     # load features and labels
     feature_df = pd.read_csv(PATH_FEATURES)
+    feature_df.set_index('hash', inplace=True)
     label_df = pd.read_csv(PATH_LABELS)
-    # TODO: compare result to if I would scale beforehand:
+    label_df.set_index('hash', inplace=True)
+    # TODO: compare result to if I would scale data beforehand:
     # sc = StandardScaler()
     # X_train = sc.fit_transform(X_train)
     # X_test = sc.transform(X_test)
+    # TODO: preprocess data/ adjust regressor to handle NaN
     regressor = RandomForestRegressor(random_state=0)
     cv_scores = cross_val_score(regressor, feature_df, label_df, cv=10)
     print("%0.2f accuracy with a standard deviation of %0.2f" % (cv_scores.mean(), cv_scores.std()))
