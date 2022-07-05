@@ -1,3 +1,4 @@
+import os
 import sys
 from typing import Final
 
@@ -33,8 +34,8 @@ def main():
 
     # calculate log of min
     label_df['log_min_label'] = np.log(label_df['min_label'])
-
-    print(label_df)
+    output_path = os.getcwd() + "/data/runtimes/" + LABEL_FILE_NAME
+    label_df.to_csv(output_path)
 
 
 if __name__ == '__main__':
