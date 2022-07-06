@@ -3,39 +3,89 @@ from typing import Final
 
 import numpy as np
 from sklearn import model_selection
+from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import KFold, cross_val_score
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from joblib import parallel_backend
 
 PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
 
-def main():
-    # define random seed first
-    np.random.seed(0)
+def load_df():
     # load features and labels
     feature_df = pd.read_csv(PATH_FEATURES)
     feature_df.set_index('hash', inplace=True)
     label_df = pd.read_csv(PATH_LABELS)
     label_df.set_index('hash', inplace=True)
+    return feature_df, label_df
 
-    # some rows have nan values in 'DegreeAssortativity'
-    feature_df['DegreeAssortativity'] = feature_df['DegreeAssortativity'].fillna(0)
 
-    # first try only the min_label
-    label_df.drop('log_min_label', axis=1, inplace=True)
+def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
+    feature_df = loaded_feature_df
+    label_df = loaded_label_df[['min_label', 'log_min_label']]
 
-    # TODO: compare result to if I would scale data beforehand:
-    # sc = StandardScaler()
-    # X_train = sc.fit_transform(X_train)
-    # X_test = sc.transform(X_test)
+    # # some rows have nan values in 'DegreeAssortativity'
+    # feature_df['DegreeAssortativity'] = feature_df['DegreeAssortativity'].fillna(0)
 
+    # let's try dropping timeouts (log(5000)) and log(0) instances
+    merged_df = label_df.join(feature_df, how='left')
+    merged_df.dropna(inplace=True)
+    merged_df = merged_df[(merged_df.min_label != 5000) & (merged_df.min_label != 0)]
+
+    # use only one label
+    label_df = label_df['min_label']
+
+    # if we are using merged_df, we have to split into feature and labels df again
+    feature_df = merged_df.drop(merged_df.columns[[0,1]], axis=1)
+    label_df = merged_df['log_min_label']
+
+    # scale features beforehand:
+    sc = StandardScaler()
+    feature_df = sc.fit_transform(feature_df)
+
+    # dimensionality reduction using a PCA:
+    pca = PCA(n_components=40)
+    principal_components = pca.fit_transform(feature_df)
+    feature_df = pd.DataFrame(data=principal_components)
+
+    return feature_df, label_df
+
+
+def regression_model_train_and_evaluate(feature_df, label_df):
     # train and evaluate Random Forest
-    regressor = RandomForestRegressor(random_state=0)
+    regressor = RandomForestRegressor(random_state=0, verbose=1)
     cv_scores = cross_val_score(regressor, feature_df, label_df.values.ravel(), cv=10)
     print("%0.2f accuracy with a standard deviation of %0.2f" % (cv_scores.mean(), cv_scores.std()))
 
 
+def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
+    # currently no preprocessing needed
+    return loaded_feature_df, loaded_label_df
+
+
+def classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
+    # train and evaluate Random Forest
+    # TODO implement RF classifier that uses 3 category labels
+
+
+def pipeline():
+    loaded_feature_df, loaded_label_df = load_df()
+
+    # # if we want to use a regression model:
+    # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # with parallel_backend('threading', n_jobs=4):
+    #     regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+
+    # if we want to use a classifier model:
+    preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    with parallel_backend('threading', n_jobs=4):
+        classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+
+
 # first argument should be path to feature file, second argument is path to label file
 if __name__ == '__main__':
-    main()
+    # define random seed first
+    np.random.seed(0)
+    pipeline()

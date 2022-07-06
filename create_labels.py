@@ -9,6 +9,26 @@ SRC_DIR: Final[str] = sys.argv[1]
 LABEL_FILE_NAME: Final[str] = 'runtime_labels.csv'
 
 
+def write_to_csv(label_df):
+    output_path = os.getcwd() + "/data/runtimes/" + LABEL_FILE_NAME
+    label_df.to_csv(output_path)
+
+
+def calculate_categorical_labels():
+    label_df = pd.read_csv(SRC_DIR)
+    label_df.set_index('hash', inplace=True)
+    # calculate a 3 category label: easy = < x seconds, hard = timeout, medium is inbetween
+    easy_threshold = 60.0
+    timeout_threshold = 5000
+    label_df['three_categories_label'] = label_df['min_label']
+    label_df['three_categories_label'].mask(label_df['min_label'] <= easy_threshold, 'easy', inplace=True)
+    label_df['three_categories_label'].mask(label_df['min_label'] >= timeout_threshold, 'hard', inplace=True)
+    label_df['three_categories_label'].mask((label_df['min_label'] > easy_threshold)
+                                            & (label_df['min_label'] < timeout_threshold), 'medium', inplace=True)
+    print(label_df['three_categories_label'].value_counts())
+    write_to_csv(label_df)
+
+
 def try_casting_to_float(x):
     res = None
     try:
@@ -34,9 +54,10 @@ def main():
 
     # calculate log of min
     label_df['log_min_label'] = np.log(label_df['min_label'])
-    output_path = os.getcwd() + "/data/runtimes/" + LABEL_FILE_NAME
-    label_df.to_csv(output_path)
+
+    # write to file
+    write_to_csv()
 
 
 if __name__ == '__main__':
-    main()
+    calculate_categorical_labels()
