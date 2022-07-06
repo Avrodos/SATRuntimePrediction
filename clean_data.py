@@ -3,6 +3,7 @@ import os
 import sys
 from typing import Final
 
+import numpy as np
 import pandas as pd
 
 PATH_DF: Final[str] = sys.argv[1]
@@ -12,6 +13,7 @@ PATH_LABELS: Final[str] = sys.argv[2]
 def main():
     # current working directory
     cwd = os.getcwd()
+
     # remove suffixes from feature df
     df = pd.read_csv(PATH_DF)
     df["hash"] = df['ID'].str.split('-').str[0]
@@ -30,6 +32,16 @@ def main():
     merged_df = df.merge(label_df, on='hash', how='left')
     merged_df = merged_df[['hash', 'min_label', 'log_min_label']]
     merged_df.to_csv(cwd + "/data/runtimes/runtime_labels.csv")
+
+    # replace timeouts (nan)
+    df['min_label'] = df['min_label'].fillna(5000)
+    df['log_min_label'] = df['log_min_label'].fillna(np.log(5000))
+    df.to_csv(cwd + "/data/runtimes/runtime_labels.csv")
+
+    # remove unnamed rows
+    df.drop(df.columns[[0,1]], axis=1, inplace=True)
+    df.set_index('hash', inplace=True)
+    df.to_csv(cwd + "/data/runtimes/runtime_labels.csv")
 
 
 # first argument should be path to feature file, second argument is path to label file

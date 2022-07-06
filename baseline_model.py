@@ -18,13 +18,21 @@ def main():
     feature_df.set_index('hash', inplace=True)
     label_df = pd.read_csv(PATH_LABELS)
     label_df.set_index('hash', inplace=True)
+
+    # some rows have nan values in 'DegreeAssortativity'
+    feature_df['DegreeAssortativity'] = feature_df['DegreeAssortativity'].fillna(0)
+
+    # first try only the min_label
+    label_df.drop('log_min_label', axis=1, inplace=True)
+
     # TODO: compare result to if I would scale data beforehand:
     # sc = StandardScaler()
     # X_train = sc.fit_transform(X_train)
     # X_test = sc.transform(X_test)
-    # TODO: preprocess data/ adjust regressor to handle NaN
+
+    # train and evaluate Random Forest
     regressor = RandomForestRegressor(random_state=0)
-    cv_scores = cross_val_score(regressor, feature_df, label_df, cv=10)
+    cv_scores = cross_val_score(regressor, feature_df, label_df.values.ravel(), cv=10)
     print("%0.2f accuracy with a standard deviation of %0.2f" % (cv_scores.mean(), cv_scores.std()))
 
 
