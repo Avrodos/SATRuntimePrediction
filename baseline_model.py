@@ -1,12 +1,14 @@
+import os
 import sys
 from typing import Final
 
 import numpy as np
-from sklearn import model_selection
+from sklearn import model_selection, metrics
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.model_selection import KFold, cross_val_score
+from sklearn.model_selection import KFold, cross_val_score, train_test_split
 import pandas as pd
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from joblib import parallel_backend
 
@@ -23,32 +25,30 @@ def load_df():
 
 
 def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
-    feature_df = loaded_feature_df
-    label_df = loaded_label_df[['min_label', 'log_min_label']]
-
+    current_label = ['timeout_factor_label']
     # # some rows have nan values in 'DegreeAssortativity'
     # feature_df['DegreeAssortativity'] = feature_df['DegreeAssortativity'].fillna(0)
 
-    # let's try dropping timeouts (log(5000)) and log(0) instances
-    merged_df = label_df.join(feature_df, how='left')
+    # let's try dropping nan's, timeouts (log(5000)) and log(0) instances
+    merged_df = loaded_label_df.join(loaded_feature_df, how='left')
     merged_df.dropna(inplace=True)
-    merged_df = merged_df[(merged_df.min_label != 5000) & (merged_df.min_label != 0)]
+    # merged_df = merged_df[(merged_df.log_parity_two_label != np.log(10000)) & (merged_df.log_parity_two_label != np.log(0))]
 
-    # use only one label
-    label_df = label_df['min_label']
+    # # use only one label
+    # label_df = label_df[current_label]
 
     # if we are using merged_df, we have to split into feature and labels df again
-    feature_df = merged_df.drop(merged_df.columns[[0, 1, 2]], axis=1)
-    label_df = merged_df['log_min_label']
-
-    # scale features beforehand:
-    sc = StandardScaler()
-    feature_df = sc.fit_transform(feature_df)
-
-    # dimensionality reduction using a PCA:
-    pca = PCA(n_components=40)
-    principal_components = pca.fit_transform(feature_df)
-    feature_df = pd.DataFrame(data=principal_components)
+    feature_df = merged_df.drop(merged_df.columns[0:7], axis=1)
+    label_df = merged_df[current_label]
+    #
+    # # scale features beforehand:
+    # sc = StandardScaler()
+    # feature_df = sc.fit_transform(feature_df)
+    #
+    # # dimensionality reduction using a PCA:
+    # pca = PCA(n_components=40)
+    # principal_components = pca.fit_transform(feature_df)
+    # feature_df = pd.DataFrame(data=principal_components)
 
     return feature_df, label_df
 
@@ -66,12 +66,12 @@ def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
     merged_df.dropna(inplace=True)
 
     # if we are using merged_df, we have to split into feature and labels df again
-    feature_df = merged_df.drop(merged_df.columns[[0, 1, 2]], axis=1)
+    feature_df = merged_df.drop(merged_df.columns[0:7], axis=1)
     label_df = merged_df['three_categories_label']
 
-    # # scale features beforehand:
-    # sc = StandardScaler()
-    # feature_df = sc.fit_transform(feature_df)
+    # scale features beforehand:
+    sc = StandardScaler()
+    feature_df = sc.fit_transform(feature_df)
     #
     # # dimensionality reduction using a PCA:
     # pca = PCA(n_components=30)
@@ -82,11 +82,35 @@ def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
 
 
 def classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
-    # train and evaluate Random Forest
+    # # train Multi-layer Perceptron - don't forget to scale features first
+    # classifier = MLPClassifier(random_state=0, max_iter=900)
+
+
+    # train Random Forest
     classifier = RandomForestClassifier(random_state=0, verbose=1)
+
+    # evaluate using cross validation
     cv_scores = cross_val_score(classifier, preprocessed_feature_df, preprocessed_label_df.values.ravel(), cv=10)
     print("%0.2f accuracy with a standard deviation of %0.2f" % (cv_scores.mean(), cv_scores.std()))
 
+    # # without cv
+    # X_train, X_test, y_train, y_test = train_test_split(preprocessed_feature_df, preprocessed_label_df.values.ravel(), test_size = 0.33, random_state = 0)
+    # classifier.fit(X_train, y_train)
+    # y_pred = classifier.predict(X_test)
+    # print("ACCURACY OF THE MODEL: ", metrics.accuracy_score(y_test, y_pred))
+    #
+    # # let's have a look at the wrong predictions
+    # indices = [i for i in range(len(y_test)) if y_test[i] != y_pred[i]]
+    # wrong_predictions = preprocessed_feature_df.iloc[indices, :]
+    # family_df = pd.read_csv(os.getcwd() + "/data/meta_data/hash_to_family_mapping.csv")
+    # family_df.set_index('hash', inplace=True)
+    # merged_df = wrong_predictions.join(family_df, how='left')
+    # print(merged_df['family'].value_counts())
+    # print(merged_df['family'].value_counts() / merged_df.shape[0])
+    #
+    # # to see the importance of the trained classifier for all features
+    # feature_imp = pd.Series(classifier.feature_importances_, index=preprocessed_feature_df.columns).sort_values(ascending=False)
+    # print(feature_imp)
 
 def pipeline():
     loaded_feature_df, loaded_label_df = load_df()
