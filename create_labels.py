@@ -64,7 +64,7 @@ def calculate_parity_two():
     print(label_df)
 
     # calculate log of par2
-    label_df['log_parity_two_label'] = np.log(label_df['parity_two_label'])
+    label_df['log10_parity_two_label'] = np.log10(label_df['parity_two_label'])
 
     # write to file
     write_to_csv(label_df)
@@ -97,20 +97,19 @@ def try_casting_to_float(x):
 
 # receives a csv with runtimes of 18 solvers and creates labels out of them
 def calculate_min_labels():
+    label_df = read_labels_from_csv()
     runtime_df = read_runtimes_from_csv()
-    label_df = pd.DataFrame(runtime_df['hash'])
-    label_df.set_index('hash', inplace=True)
 
     # min runtime as label - e.g. portfolio solver
     # calculate min over a row
     label_df['min_label'] = runtime_df.min(axis=1)
 
     # calculate log of min
-    label_df['log_min_label'] = np.log(label_df['min_label'])
+    label_df['log10_min_label'] = np.log10(label_df['min_label'])
 
     # write to file
-    write_to_csv()
+    write_to_csv(label_df)
 
 
 if __name__ == '__main__':
-    calculate_categorical_labels()
+    calculate_min_labels()
