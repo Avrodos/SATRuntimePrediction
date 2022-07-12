@@ -33,11 +33,31 @@ def read_runtimes_from_csv():
 
 def add_family_label():
     label_df = read_labels_from_csv()
-    family_df = pd.read_csv(os.getcwd() + "/data/meta_data/hash_to_family_mapping.csv")
-    family_df.set_index('hash', inplace=True)
-    merged_df = label_df.join(family_df, how='left')
-    print(merged_df['family'].value_counts())
-    print(merged_df['family'].value_counts() / merged_df.shape[0])
+    # # read and merge family labels
+    # family_df = pd.read_csv(os.getcwd() + "/data/meta_data/hash_to_family_mapping.csv")
+    # family_df.set_index('hash', inplace=True)
+    # merged_df = label_df.join(family_df, how='left')
+    # family_counts = merged_df['family'].value_counts()
+    merged_df = label_df
+
+    # # we will keep the three most common family labels and replace all others with 'other'
+    # most_common_families = ['cryptography', 'bitvector', 'antibandwidth']
+    # merged_df['four_families'] = np.where(merged_df['family'].isin(most_common_families), merged_df['family'], 'other')
+    # family_counts = merged_df['four_families'].value_counts()
+
+    # group all families with less than threshold occurences as 'other'
+    threshold = 10
+    col = 'all_families_threshold_' + str(threshold)
+    merged_df[col] = merged_df['all_families']
+    merged_df.loc[merged_df[col].value_counts()[merged_df[col]].values < 10, col] = "other "
+
+    family_counts = merged_df[col].value_counts()
+    print("Number of families:")
+    print(family_counts.shape[0])
+    print("Percentage of each family: ")
+    print(family_counts / merged_df.shape[0])
+
+    write_to_csv(merged_df)
 
 
 # label = num of solvers that timed out
@@ -73,8 +93,8 @@ def calculate_parity_two():
 def calculate_categorical_labels():
     label_df = read_labels_from_csv()
     current_label = 'parity_two_label'
-    # calculate a 3 category label: easy = < x seconds, hard = timeout, medium is inbetween
-    easy_threshold = 3000.0
+    # calculate a 3 category label: easy <= x seconds, hard = timeout, medium is inbetween
+    easy_threshold = 4000.0
     timeout_threshold = 10000
     label_df['three_categories_label'] = label_df[current_label]
     label_df['three_categories_label'].mask(label_df[current_label] <= easy_threshold, 'easy', inplace=True)
@@ -112,4 +132,4 @@ def calculate_min_labels():
 
 
 if __name__ == '__main__':
-    calculate_min_labels()
+    add_family_label()

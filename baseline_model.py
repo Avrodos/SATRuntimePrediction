@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import KFold, cross_val_score, train_test_split
 import pandas as pd
-from sklearn.neural_network import MLPClassifier
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from joblib import parallel_backend
 
@@ -25,7 +25,7 @@ def load_df():
 
 
 def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
-    current_label = ['timeout_factor_label']
+    current_label = ['log10_parity_two_label']
     # # some rows have nan values in 'DegreeAssortativity'
     # feature_df['DegreeAssortativity'] = feature_df['DegreeAssortativity'].fillna(0)
 
@@ -33,17 +33,17 @@ def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
     merged_df = loaded_label_df.join(loaded_feature_df, how='left')
     merged_df.dropna(inplace=True)
     # merged_df = merged_df[(merged_df.log_parity_two_label != np.log(10000)) & (merged_df.log_parity_two_label != np.log(0))]
-
+    merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
     # # use only one label
     # label_df = label_df[current_label]
 
     # if we are using merged_df, we have to split into feature and labels df again
-    feature_df = merged_df.drop(merged_df.columns[0:7], axis=1)
+    feature_df = merged_df.drop(merged_df.columns[0:len(loaded_label_df.columns)], axis=1)
     label_df = merged_df[current_label]
     #
-    # # scale features beforehand:
-    # sc = StandardScaler()
-    # feature_df = sc.fit_transform(feature_df)
+    # scale features beforehand:
+    sc = StandardScaler()
+    feature_df = sc.fit_transform(feature_df)
     #
     # # dimensionality reduction using a PCA:
     # pca = PCA(n_components=40)
@@ -55,8 +55,9 @@ def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
 
 def regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
     # train and evaluate Random Forest
-    regressor = RandomForestRegressor(random_state=0, verbose=1)
-    cv_scores = cross_val_score(regressor, preprocessed_feature_df, preprocessed_label_df.values.ravel(), cv=10)
+    # model = RandomForestRegressor(random_state=0, verbose=1)
+    model = MLPRegressor(random_state=42, max_iter=800)
+    cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df.values.ravel(), cv=10)
     print("%0.2f accuracy with a standard deviation of %0.2f" % (cv_scores.mean(), cv_scores.std()))
 
 
@@ -66,12 +67,12 @@ def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
     merged_df.dropna(inplace=True)
 
     # if we are using merged_df, we have to split into feature and labels df again
-    feature_df = merged_df.drop(merged_df.columns[0:7], axis=1)
-    label_df = merged_df['three_categories_label']
+    feature_df = merged_df.drop(merged_df.columns[0:len(loaded_label_df.columns)], axis=1)
+    label_df = merged_df['all_families_threshold_10']
 
-    # scale features beforehand:
-    sc = StandardScaler()
-    feature_df = sc.fit_transform(feature_df)
+    # # scale features beforehand:
+    # sc = StandardScaler()
+    # feature_df = sc.fit_transform(feature_df)
     #
     # # dimensionality reduction using a PCA:
     # pca = PCA(n_components=30)
@@ -91,7 +92,7 @@ def classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_la
 
     # evaluate using cross validation
     cv_scores = cross_val_score(classifier, preprocessed_feature_df, preprocessed_label_df.values.ravel(), cv=10)
-    print("%0.2f accuracy with a standard deviation of %0.2f" % (cv_scores.mean(), cv_scores.std()))
+    print("%0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
 
     # # without cv
     # X_train, X_test, y_train, y_test = train_test_split(preprocessed_feature_df, preprocessed_label_df.values.ravel(), test_size = 0.33, random_state = 0)
