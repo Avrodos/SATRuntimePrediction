@@ -27,11 +27,11 @@ def load_df():
     merged_df.dropna(inplace=True)
     # to drop timeouts and 0sec instances
     # merged_df = merged_df[(merged_df.parity_two_label != 10000) & (merged_df.parity_two_label != 0)]
-    merged_df = merged_df[(merged_df.min_label != 0)]
+    # merged_df = merged_df[(merged_df.min_label != 0)]
 
     # if we are using merged_df, we have to split into feature and labels df again
     feature_df = merged_df.drop(merged_df.columns[0:len(label_df.columns)], axis=1)
-    label_df = merged_df['log10_min_label']
+    label_df = merged_df['parity_two_label']
     return feature_df, label_df.values.ravel()
 
 
@@ -76,15 +76,15 @@ if __name__ == '__main__':
 
     # now compare random search results to base model:
     base_model = RandomForestRegressor(random_state=0)
-    cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
-    # cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10)
+    # cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
+    cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10)
     print("Base Model: %0.2f accuracy with a standard deviation of %0.2f" % (cv_scores.mean(), cv_scores.std()))
 
     # these values are based on random search results
     # best_random = RandomForestClassifier(random_state=0, n_estimators=400, min_samples_split=5, min_samples_leaf=1, max_features='sqrt', max_depth=60, bootstrap=True)
-    best_random = RandomForestRegressor(random_state=0, n_estimators=400, min_samples_split=2, min_samples_leaf=1, max_features='sqrt', max_depth=None, bootstrap=True)
-    cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
-    # cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10)
+    best_random = RandomForestRegressor(random_state=0, n_estimators=800, min_samples_split=2, min_samples_leaf=1, max_features='sqrt', max_depth=90, bootstrap=True)
+    # cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
+    cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10)
     print("Optimized Model: %0.2f accuracy with a standard deviation of %0.2f" % (cv_scores.mean(), cv_scores.std()))
-
-    # TODO: We can further optimize using grid search near our current parameters and then train on the complete set in the end
+    #
+    # # TODO: We can further optimize using grid search near our current parameters and then train on the complete set in the end
