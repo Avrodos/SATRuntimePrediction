@@ -55,8 +55,6 @@ def calculate_components(given_graph):
     return data_df, time_df
 
 
-# TODO: graph core
-
 # calculates centrality measures
 # a distribution is measured using 5 stats:
 # mean, min, max, variance & entropy
@@ -314,26 +312,26 @@ def calculate_diameters(given_graph):
     return data_df, time_df
 
 
-# # Takes too long for current purpose
-# def calculate_small_world(given_graph):
-#     time_start = time.process_time()
-#     nx_graph = nk.nxadapter.nk2nx(given_graph)  # convert from NetworKit.Graph to networkx.Graph
-#     time_graph_conversion = time.process_time() - time_start
-#
-#     time_start = time.process_time()
-#     # graph is commonly classified as small-world for sigma > 1
-#     sigma = nx.sigma(nx_graph)
-#     time_sigma = time_graph_conversion + time.process_time() - time_start
-#
-#     time_start = time.process_time()
-#     # graph is commonly classified as small-world for omega close to 0
-#     omega = nx.omega(nx_graph)
-#     time_omega = time_graph_conversion + time.process_time() - time_start
-#
-#     # putting it into two df
-#     data_df = pd.DataFrame({'SmallWorldSigma': [], 'SmallWorldOmega': [omega]})
-#     time_df = pd.DataFrame({'Time_SmallWorldSigma': [], 'Time_SmallWorldOmega': [time_omega]})
-#     return data_df, time_df
+# Takes too long for current purpose
+def calculate_small_world(given_graph):
+    time_start = time.process_time()
+    nx_graph = nk.nxadapter.nk2nx(given_graph)  # convert from NetworKit.Graph to networkx.Graph
+    time_graph_conversion = time.process_time() - time_start
+
+    time_start = time.process_time()
+    # graph is commonly classified as small-world for sigma > 1
+    sigma = nx.sigma(nx_graph)
+    time_sigma = time_graph_conversion + time.process_time() - time_start
+
+    time_start = time.process_time()
+    # graph is commonly classified as small-world for omega close to 0
+    omega = nx.omega(nx_graph)
+    time_omega = time_graph_conversion + time.process_time() - time_start
+
+    # putting it into two df
+    data_df = pd.DataFrame({'SmallWorldSigma': [], 'SmallWorldOmega': [omega]})
+    time_df = pd.DataFrame({'Time_SmallWorldSigma': [], 'Time_SmallWorldOmega': [time_omega]})
+    return data_df, time_df
 
 
 def main():
