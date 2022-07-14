@@ -51,7 +51,7 @@ def string_to_numerical_feature_encoder(feature_df):
 
 
 def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
-    current_label = ['parity_two_label']
+    current_label = ['log_parity_two_label']
 
     # sometimes we need to drop instances
     merged_df = loaded_label_df.join(loaded_feature_df, how='left')
@@ -60,7 +60,7 @@ def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
     # drop timeouts and 0's
     # merged_df = merged_df[(merged_df.log_parity_two_label != np.log(10000)) & (merged_df.log_parity_two_label != np.log(0))]
     # # drop only the 0's
-    # merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
+    merged_df = merged_df[(merged_df.log_parity_two_label != np.log(0))]
 
     # if we are using merged_df, we have to split into feature and labels df again
     feature_df = merged_df.drop(merged_df.columns[0:len(loaded_label_df.columns)], axis=1)
@@ -114,7 +114,9 @@ def regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_la
     # # interestingly, adding the family to the features barely improves our model
     # compare_model_to_features_with_family(model, preprocessed_feature_df, preprocessed_label_df)
 
-    compare_model_to_features_with_category(model, preprocessed_feature_df, preprocessed_label_df)
+    # # adding 'easy', 'medium', etc to the features as label makes regression a lot more accurate
+    # # as expected, due to smaller search space
+    # compare_model_to_features_with_category(model, preprocessed_feature_df, preprocessed_label_df)
 
     
 

@@ -131,5 +131,35 @@ def calculate_min_labels():
     write_to_csv(label_df)
 
 
+def calculate_time_mean_per_features():
+    input_time_path = os.getcwd() + '/data/measured_data/SAT_time'
+    output_time_path = os.getcwd() + '/data/measured_data/SAT_time_labels.csv'
+
+    # read the time df
+    input_time_df = pd.read_csv(input_time_path, index_col=0)
+
+    # now calculate the mean for every column
+    time_mean_per_feature = input_time_df.mean(axis=0)
+    time_df = time_mean_per_feature.to_frame()
+    time_df.rename(columns={0: 'time_mean_per_feature'}, inplace=True)
+
+    # calculate a 4 category label, depending on how long the feature calculation took on average:
+    # thresholds are taken by having a look at mean times and identifying clusters
+    cheap_threshold = 1.3
+    moderate_threshold = 70.0
+    expensive_threshold = 160.0
+    time_df['time_cost_category'] = time_df['time_mean_per_feature']
+    time_df['time_cost_category'].mask(time_df['time_mean_per_feature'] <= cheap_threshold, 'cheap', inplace=True)
+    time_df['time_cost_category'].mask((time_df['time_mean_per_feature'] <= moderate_threshold)
+                                       & (time_df['time_mean_per_feature'] > cheap_threshold), 'moderate', inplace=True)
+    time_df['time_cost_category'].mask((time_df['time_mean_per_feature'] <= expensive_threshold)
+                                       & (time_df['time_mean_per_feature'] > moderate_threshold), 'expensive', inplace=True)
+    time_df['time_cost_category'].mask((time_df['time_mean_per_feature'] > expensive_threshold), 'very expensive', inplace=True)
+    print(time_df['time_cost_category'].value_counts())
+
+    # write it to a file
+    time_df.to_csv(output_time_path)
+
+
 if __name__ == '__main__':
-    add_family_label()
+    calculate_time_mean_per_features()

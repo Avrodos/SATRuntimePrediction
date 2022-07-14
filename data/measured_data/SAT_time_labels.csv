@@ -1,0 +1,21 @@
+,time_mean_per_feature,time_cost_category
+Time_ReadGraph,50.61381996970573,moderate
+Time_#ConnectedComponents,0.6118240534612138,cheap
+Time_DegreeCentrality,0.5230458915640808,cheap
+Time_DegreeAssortativity,1.2625229303596122,cheap
+Time_Centralization,0.003962823032883278,cheap
+Time_EigenvectorCentrality,3099.575378966159,very expensive
+Time_PageRank,63.51557672288027,moderate
+Time_KatzCentrality,157.82295827891272,expensive
+Time_BetweennessCentrality,65.08473495358892,moderate
+Time_#Communities,153.42621708020488,expensive
+Time_CommunitySize,153.4801658395261,expensive
+Time_ClusterImbalance,154.25508741585836,expensive
+Time_IsProperClustering,153.43083584956662,expensive
+Time_IsSingletonClustering,154.21814737016865,expensive
+Time_IsOneClustering,154.24782059188195,expensive
+Time_EdgeCut,153.7611092764161,expensive
+Time_Modularity,157.13605531557502,expensive
+Time_HubDominance,154.57584005327027,expensive
+Time_GlobalIntrapartitionDensity,153.75175931894142,expensive
+Time_GlobalClusteringCoefficient,0.07717818454930743,cheap
