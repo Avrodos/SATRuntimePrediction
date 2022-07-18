@@ -1,5 +1,4 @@
 ,time_mean_per_feature,time_cost_category
-Time_ReadGraph,50.61381996970573,moderate
 Time_#ConnectedComponents,0.6118240534612138,cheap
 Time_DegreeCentrality,0.5230458915640808,cheap
 Time_DegreeAssortativity,1.2625229303596122,cheap

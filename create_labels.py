@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Final
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -140,12 +141,25 @@ def calculate_time_mean_per_features():
 
     # now calculate the mean for every column
     time_mean_per_feature = input_time_df.mean(axis=0)
+    time_mean_per_feature.drop(labels=['Time_ReadGraph'], inplace=True)
     time_df = time_mean_per_feature.to_frame()
     time_df.rename(columns={0: 'time_mean_per_feature'}, inplace=True)
 
+    # visualize the mean-times
+    num_colors = 4
+    cmap = plt.get_cmap('viridis', num_colors)
+    cmap.set_over('red')
+    scatter_plot = plt.scatter(time_mean_per_feature, list(time_df.index.values), c=time_mean_per_feature, cmap=cmap, vmin=1.3, vmax=160)
+    plt.colorbar(scatter_plot, extend='max')
+    plt.title("Extraction Time of Features")
+    plt.xlabel("Mean Extraction Time per Feature in s")
+    plt.ylabel("Feature Classes")
+    plt.tight_layout()
+    plt.show()
+
     # calculate a 4 category label, depending on how long the feature calculation took on average:
     # thresholds are taken by having a look at mean times and identifying clusters
-    cheap_threshold = 1.3
+    cheap_threshold = 1.5
     moderate_threshold = 70.0
     expensive_threshold = 160.0
     time_df['time_cost_category'] = time_df['time_mean_per_feature']
