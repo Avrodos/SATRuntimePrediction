@@ -1,0 +1,31 @@
+,features,cv_scores_mean,cv_std
+0,"('#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality', 'family')",0.5360766767574716,0.060510803710731254
+1,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')",0.5216292742212294,0.05784321025770516
+2,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality', 'family')",0.5146288503100431,0.07074800993371394
+3,"('#ConnectedComponents', '#Nodes', 'MeanDegreeCentrality', 'family')",0.5130843929972502,0.05095445617889643
+4,"('#Nodes', 'MeanDegreeCentrality', 'family')",0.5078452458640632,0.0529272478333651
+5,"('#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')",0.5051037696732094,0.05610993276466184
+6,"('#Nodes', 'EntropyDegreeCentrality', 'family')",0.5019498162295836,0.0750386577814714
+7,"('#ConnectedComponents', 'EntropyDegreeCentrality', 'MeanDegreeCentrality', 'family')",0.4986989334262885,0.05160342863261132
+8,"('EntropyDegreeCentrality', 'MeanDegreeCentrality', 'family')",0.4918371532599452,0.05464383838368777
+9,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality')",0.4773257762416785,0.07520595038646097
+10,"('#ConnectedComponents', '#Nodes', 'MeanDegreeCentrality')",0.47430566854101774,0.04563500671209626
+11,"('#ConnectedComponents', 'MeanDegreeCentrality', 'family')",0.47259894416355086,0.04566089792395706
+12,"('#ConnectedComponents', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')",0.4573857906287649,0.04383408302125804
+13,"('MeanDegreeCentrality', 'family')",0.444245245529152,0.04455036861299826
+14,"('#ConnectedComponents', '#Nodes', 'family')",0.4373630721646915,0.061554352930101544
+15,"('#Nodes', 'MeanDegreeCentrality')",0.43274255251790245,0.04886328221249218
+16,"('#Nodes', 'EntropyDegreeCentrality')",0.4228073056805024,0.08882846348523388
+17,"('#ConnectedComponents', 'EntropyDegreeCentrality', 'family')",0.42262108411305005,0.07273672838913216
+18,"('EntropyDegreeCentrality', 'MeanDegreeCentrality')",0.41305170855823625,0.05390408057804755
+19,"('#Nodes', 'family')",0.3981774791560831,0.07847365551756422
+20,"('EntropyDegreeCentrality', 'family')",0.39648057551058796,0.08613183444586608
+21,"('#ConnectedComponents', 'EntropyDegreeCentrality')",0.3343418085946059,0.060630229413015296
+22,"('#ConnectedComponents', 'family')",0.32156246875803124,0.05334089989352597
+23,"('#ConnectedComponents', 'MeanDegreeCentrality')",0.3108982302931862,0.04142635875187787
+24,"('#ConnectedComponents', '#Nodes')",0.2736664109575127,0.05318133464523802
+25,"('family',)",0.23182025758583932,0.04717732498167753
+26,"('MeanDegreeCentrality',)",0.1610796164507633,0.057607934850294355
+27,"('EntropyDegreeCentrality',)",0.11680274404925428,0.08105008799194927
+28,"('#ConnectedComponents',)",0.08460964957659674,0.03314536055916556
+29,"('#Nodes',)",0.03761802520988664,0.03877905833956641
