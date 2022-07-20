@@ -5,6 +5,7 @@ from typing import Final
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 
 RUNTIME_LABELS_PATH: Final[str] = sys.argv[1]
 # comment out if not needed
@@ -149,7 +150,8 @@ def calculate_time_mean_per_features():
     num_colors = 4
     cmap = plt.get_cmap('viridis', num_colors)
     cmap.set_over('red')
-    scatter_plot = plt.scatter(time_mean_per_feature, list(time_df.index.values), c=time_mean_per_feature, cmap=cmap, vmin=1.3, vmax=160)
+    scatter_plot = plt.scatter(time_mean_per_feature, list(time_df.index.values), c=time_mean_per_feature, cmap=cmap,
+                               vmin=1.3, vmax=160)
     plt.colorbar(scatter_plot, extend='max')
     plt.title("Extraction Time of Features")
     plt.xlabel("Mean Extraction Time per Feature in s")
@@ -167,13 +169,81 @@ def calculate_time_mean_per_features():
     time_df['time_cost_category'].mask((time_df['time_mean_per_feature'] <= moderate_threshold)
                                        & (time_df['time_mean_per_feature'] > cheap_threshold), 'moderate', inplace=True)
     time_df['time_cost_category'].mask((time_df['time_mean_per_feature'] <= expensive_threshold)
-                                       & (time_df['time_mean_per_feature'] > moderate_threshold), 'expensive', inplace=True)
-    time_df['time_cost_category'].mask((time_df['time_mean_per_feature'] > expensive_threshold), 'very expensive', inplace=True)
+                                       & (time_df['time_mean_per_feature'] > moderate_threshold), 'expensive',
+                                       inplace=True)
+    time_df['time_cost_category'].mask((time_df['time_mean_per_feature'] > expensive_threshold), 'very expensive',
+                                       inplace=True)
     print(time_df['time_cost_category'].value_counts())
 
     # write it to a file
     time_df.to_csv(output_time_path)
 
 
+def kmeans_cluster_labels():
+    label_df = read_labels_from_csv()
+    current_label = 'parity_two_label'
+    # number of clusters
+    k = 3
+    new_label_name = f"{k}-means_label"
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans_df = pd.DataFrame(label_df[current_label])
+    # we have to drop nan's
+    kmeans_df.dropna(inplace=True)
+    # execute kmeans and retrieve labels
+    kmeans_df[new_label_name] = kmeans.fit_predict(kmeans_df)
+    # drop old label column
+    kmeans_df = kmeans_df.drop(labels=current_label, axis=1)
+    print(kmeans_df)
+
+    # we have to merge due to the drops
+    merged_df = label_df.join(kmeans_df, how='left')
+    # plot our clusters
+    frame = plt.scatter(merged_df[current_label], merged_df.index, c=merged_df[new_label_name])
+    frame.axes.get_yaxis().set_visible(False)
+    plt.title(f'{k}-Means Clustering of Average Par-2 Time for Labelling')
+    plt.xlabel('Average Par-2 Time of Each Instance')
+    plt.show()
+
+    # write to file
+    write_to_csv(merged_df)
+
+
+def find_optimal_num_of_clusters():
+    # inspired from https://medium.com/pursuitnotes/k-means-clustering-model-in-6-steps-with-python-35b532cfa8ad
+    wcss = []
+    label_df = read_labels_from_csv()
+    current_label = 'parity_two_label'
+    kmeans_df = pd.DataFrame(label_df[current_label])
+    # we have to drop nan's
+    kmeans_df.dropna(inplace=True)
+    # this loop will fit the k-means algorithm to our data and
+    # second we will compute the within cluster sum of squares and #appended to our wcss list.
+    for i in range(1, 11):
+        kmeans = KMeans(n_clusters=i, random_state=42)
+        kmeans.fit(kmeans_df)
+        # kmeans inertia_ attribute is:  Sum of squared distances of samples #to their closest cluster center.
+        wcss.append(kmeans.inertia_)
+
+    # Plot the elbow graph
+    fix, ax = plt.subplots()
+    ax.plot(range(1, 11), wcss)
+    plt.title('The Elbow Method Graph')
+    plt.xlabel('Number of Clusters')
+    plt.ylabel('WCSS')
+    # to have a tick at every integer
+    plt.xticks(np.arange(0, 11, 1))
+
+    # adjust the elbow_point by looking at the graph
+    elbow_point = (3, wcss[2])
+    ax.annotate('Elbow Point', xy=elbow_point, xycoords='data',
+                xytext=(0.375, 0.2), textcoords='axes fraction',
+                bbox=dict(boxstyle='round,pad=0.2', alpha=0.3),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.5', color='black', relpos=(0, 0.5)),
+                horizontalalignment='right', verticalalignment='top', )
+
+    plt.show()
+    print('done')
+
+
 if __name__ == '__main__':
-    calculate_time_mean_per_features()
+    find_optimal_num_of_clusters()
