@@ -25,10 +25,8 @@ PATH_LABELS: Final[str] = sys.argv[2]
 
 def load_df():
     # load features and labels
-    feature_df = pd.read_csv(PATH_FEATURES)
-    feature_df.set_index('hash', inplace=True)
-    label_df = pd.read_csv(PATH_LABELS)
-    label_df.set_index('hash', inplace=True)
+    feature_df = pd.read_csv(PATH_FEATURES, index_col=0)
+    label_df = pd.read_csv(PATH_LABELS, index_col=0)
     return feature_df, label_df
 
 
@@ -138,7 +136,7 @@ def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed
 
 
 def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
-    current_label = ['all_families']
+    current_label = ['5-means_label']
 
     # to ensure we have a label on each feature
     merged_df = loaded_label_df[current_label].join(loaded_feature_df, how='left')
@@ -357,16 +355,16 @@ def pipeline():
     #     test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
 
-    # # if we want to use a classifier model:
-    # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
-    # with parallel_backend('threading', n_jobs=4):
-    #     # cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-    #     test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-
-    # find min features with instance-family given as feature
-    preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # if we want to use a classifier model:
+    preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
     with parallel_backend('threading', n_jobs=4):
-        find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df)
+        cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+        # test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+
+    # # find min features with instance-family given as feature
+    # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # with parallel_backend('threading', n_jobs=4):
+    #     find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df)
 
 
 
