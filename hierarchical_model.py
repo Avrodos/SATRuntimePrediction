@@ -29,74 +29,67 @@ def string_to_numerical_feature_encoder(feature_df):
     return feature_df
 
 
-def add_family_as_feature(preprocessed_feature_df):
-    # We can add the family to the features
-    family_df = pd.read_csv(os.getcwd() + "/data/meta_data/hash_to_family_mapping.csv")
-    family_df.set_index('hash', inplace=True)
-    preprocessed_feature_df = preprocessed_feature_df.join(family_df, how='left')
-    return preprocessed_feature_df
-
-
 def load_df():
     # load features and labels
     feature_df = pd.read_csv(PATH_FEATURES, index_col=0)
-    feature_df = add_family_as_feature(feature_df)
-
     label_df = pd.read_csv(PATH_LABELS, index_col=0)
 
     return feature_df, label_df
 
 
 def family_classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
-    # to ensure we have a label on each feature
+    # to ensure we have a label on each feature and to add the family as a feature
     merged_df = loaded_label_df[CURRENT_FAMILY_LABEL].join(loaded_feature_df, how='left')
     # we need to drop nan instances
     merged_df.dropna(inplace=True)
 
-    # if we are using merged_df, we have to split into feature and labels df again
-    feature_df = merged_df.drop(labels=CURRENT_FAMILY_LABEL, axis=1)
-    label_df = merged_df[CURRENT_FAMILY_LABEL]
+    # replace a family name with an arbitrary, but consistent, number
+    family_feature_df = string_to_numerical_feature_encoder(merged_df)
+    # we will join the runtime_labels to the features as well for slicing purposes,
+    # but we will drop them before using them in a model
+    extended_feature_df = family_feature_df.join(loaded_label_df[CURRENT_RUNTIME_LABEL], how='left')
+    extended_feature_df.dropna(inplace=True)
 
-    return feature_df, label_df.values.ravel()
+    return extended_feature_df, extended_feature_df[CURRENT_FAMILY_LABEL]
 
 
 def pipeline():
     loaded_feature_df, loaded_label_df = load_df()
-    family_feature_df, family_label_df = family_classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
-    # replace a family name with an arbitrary, but consistent, number
-    family_feature_df = string_to_numerical_feature_encoder(family_feature_df)
-    # we will join the labels to the features for slicing purposes, but we will drop them before using them in a model
-    family_feature_df = family_feature_df.join(loaded_label_df[CURRENT_RUNTIME_LABEL], how='left')
-    family_feature_df.dropna(inplace=True)
-    family_label_df = family_feature_df['family']
+    extended_feature_df, family_label_df = family_classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+
     # first split into train and test
-    X_train, X_test, y_train, y_test = train_test_split(family_feature_df, family_label_df, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(extended_feature_df, family_label_df, random_state=42)
     family_classifier = RandomForestClassifier(random_state=42, verbose=1)
     base_runtime_regressor = RandomForestRegressor(random_state=42)
-    # drop all labels
-    X_train_base_features = X_train.drop(labels=[CURRENT_RUNTIME_LABEL[0], 'family'], axis=1)
-    X_test_base_features = X_test.drop(labels=[CURRENT_RUNTIME_LABEL[0], 'family'], axis=1)
-    y_train_family = X_train['family']
+    # drop all labels  before using them for training
+    X_train_base_features = X_train.drop(labels=[CURRENT_RUNTIME_LABEL[0], CURRENT_FAMILY_LABEL[0]], axis=1)
+    X_test_base_features = X_test.drop(labels=[CURRENT_RUNTIME_LABEL[0], CURRENT_FAMILY_LABEL[0]], axis=1)
+    y_train_family = X_train[CURRENT_FAMILY_LABEL[0]]
     y_train_runtime = X_train[CURRENT_RUNTIME_LABEL[0]]
     family_classifier.fit(X_train_base_features, y_train_family)
+    # as a backup, in case we don't want or can't use the family specific regressor
     base_runtime_regressor.fit(X_train_base_features, y_train_runtime)
 
     # now we also want a random forest model for each family
-    # first we need to splice the df
+    # first we need to slice the df
     df_sliced_dict_train = {}
-    for family in X_train['family'].unique():
+    for family in X_train[CURRENT_FAMILY_LABEL[0]].unique():
         # each entry contains base features + family_label + runtime_label
-        df_sliced_dict_train[family] = X_train[X_train['family'] == family]
+        df_sliced_dict_train[family] = X_train[X_train[CURRENT_FAMILY_LABEL[0]] == family]
         df_sliced_dict_train[family] = df_sliced_dict_train[family].dropna()
+        df_sliced_dict_train[family] = df_sliced_dict_train[family].drop(labels=CURRENT_FAMILY_LABEL, axis=1)
+        print()
 
     # this dict will map the family to a regressor trained only on one family
     family_specific_models = {}
     with parallel_backend('threading', n_jobs=4):
         for family in df_sliced_dict_train.keys():
-            if len(df_sliced_dict_train[family] > FAMILY_COUNT_THRESHOLD):
-                regressor = RandomForestRegressor(random_state=42, verbose=1)
-                runtime_X_train = df_sliced_dict_train[family].drop(labels=[CURRENT_RUNTIME_LABEL[0], 'family'], axis=1)
+            if len(df_sliced_dict_train[family]) > FAMILY_COUNT_THRESHOLD:
+                # the model shouldn't use any labels as features:
+                runtime_X_train = df_sliced_dict_train[family].drop(labels=CURRENT_RUNTIME_LABEL, axis=1)
                 runtime_y_train = df_sliced_dict_train[family][CURRENT_RUNTIME_LABEL[0]]
+                # we are using a random forest regression
+                regressor = RandomForestRegressor(random_state=42, verbose=1)
                 regressor.fit(runtime_X_train, runtime_y_train)
                 family_specific_models[family] = regressor
             else:
@@ -106,14 +99,21 @@ def pipeline():
     # first let 'family_classifier' predict the family
     # then let the family specific regressor predict the runtime
     runtime_pred = []
-    y_pred = family_classifier.predict(X_test_base_features)
-    for idx, predicted_family in enumerate(y_pred):
+    y_pred_family = family_classifier.predict(X_test_base_features)
+    for idx, predicted_family in enumerate(y_pred_family):
         if predicted_family in family_specific_models.keys():
             current_row_df = X_test_base_features.iloc[[idx]]
             curr_pred = family_specific_models[predicted_family].predict(current_row_df)
             runtime_pred.append(curr_pred[0])
-    y_test_true = X_test[CURRENT_RUNTIME_LABEL]
-    print("Accuracy of the hierarchical model with all features: %0.4f" % metrics.r2_score(y_test_true, runtime_pred))
+        else:
+            # should never occur
+            current_row_df = X_test_base_features.iloc[[idx]]
+            curr_pred = base_runtime_regressor.predict(current_row_df)
+            runtime_pred.append(curr_pred[0])
+
+    y_test_runtime = X_test[CURRENT_RUNTIME_LABEL]
+    print("Accuracy of the class prediction: %0.4f" % metrics.accuracy_score(y_test, y_pred_family))
+    print("Accuracy of the runtime prediction: %0.4f" % metrics.r2_score(y_test_runtime, runtime_pred))
 
 
 
