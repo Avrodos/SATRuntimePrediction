@@ -1,5 +1,4 @@
 # first argument should be path to feature file, second argument is path to label file
-import os
 import sys
 from typing import Final
 
@@ -7,7 +6,7 @@ import numpy as np
 import pandas as pd
 from joblib import parallel_backend
 from sklearn import metrics
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
@@ -15,7 +14,7 @@ PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
 FAMILY_COUNT_THRESHOLD: Final[int] = 10
 CURRENT_FAMILY_LABEL: Final = ['all_families_threshold_10']
-CURRENT_RUNTIME_LABEL: Final = ['parity_two_label']
+CURRENT_RUNTIME_LABEL: Final = ['3-means_label']
 le = LabelEncoder()
 
 
@@ -60,7 +59,8 @@ def pipeline():
     # first split into train and test
     X_train, X_test, y_train, y_test = train_test_split(extended_feature_df, family_label_df, random_state=42)
     family_classifier = RandomForestClassifier(random_state=42, verbose=1)
-    base_runtime_regressor = RandomForestRegressor(random_state=42)
+    # base_runtime_model = RandomForestRegressor(random_state=42)
+    base_runtime_model = RandomForestClassifier(random_state=42)
     # drop all labels  before using them for training
     X_train_base_features = X_train.drop(labels=[CURRENT_RUNTIME_LABEL[0], CURRENT_FAMILY_LABEL[0]], axis=1)
     X_test_base_features = X_test.drop(labels=[CURRENT_RUNTIME_LABEL[0], CURRENT_FAMILY_LABEL[0]], axis=1)
@@ -68,7 +68,7 @@ def pipeline():
     y_train_runtime = X_train[CURRENT_RUNTIME_LABEL[0]]
     family_classifier.fit(X_train_base_features, y_train_family)
     # as a backup, in case we don't want or can't use the family specific regressor
-    base_runtime_regressor.fit(X_train_base_features, y_train_runtime)
+    base_runtime_model.fit(X_train_base_features, y_train_runtime)
 
     # now we also want a random forest model for each family
     # first we need to slice the df
@@ -89,11 +89,16 @@ def pipeline():
                 runtime_X_train = df_sliced_dict_train[family].drop(labels=CURRENT_RUNTIME_LABEL, axis=1)
                 runtime_y_train = df_sliced_dict_train[family][CURRENT_RUNTIME_LABEL[0]]
                 # we are using a random forest regression
-                regressor = RandomForestRegressor(random_state=42, verbose=1)
-                regressor.fit(runtime_X_train, runtime_y_train)
-                family_specific_models[family] = regressor
+                model = RandomForestClassifier(random_state=42, verbose=1)
+                # # if we use a model that needs scaling/pipeline based fittig:
+                # model = Pipeline([
+                #     ('scaling', StandardScaler()),
+                #     ('classification', MLPClassifier(random_state=42, max_iter=500))
+                #     ])
+                model.fit(runtime_X_train, runtime_y_train)
+                family_specific_models[family] = model
             else:
-                family_specific_models[family] = base_runtime_regressor
+                family_specific_models[family] = base_runtime_model
 
     # now we have a hierarchical model:
     # first let 'family_classifier' predict the family
@@ -108,12 +113,13 @@ def pipeline():
         else:
             # should never occur
             current_row_df = X_test_base_features.iloc[[idx]]
-            curr_pred = base_runtime_regressor.predict(current_row_df)
+            curr_pred = base_runtime_model.predict(current_row_df)
             runtime_pred.append(curr_pred[0])
 
     y_test_runtime = X_test[CURRENT_RUNTIME_LABEL]
     print("Accuracy of the class prediction: %0.4f" % metrics.accuracy_score(y_test, y_pred_family))
-    print("Accuracy of the runtime prediction: %0.4f" % metrics.r2_score(y_test_runtime, runtime_pred))
+    # print("Accuracy of the runtime prediction: %0.4f" % metrics.r2_score(y_test_runtime, runtime_pred))
+    print("Accuracy of the runtime prediction: %0.4f" % metrics.accuracy_score(y_test_runtime, runtime_pred))
 
 
 

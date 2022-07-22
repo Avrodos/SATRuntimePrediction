@@ -4,20 +4,18 @@ from collections import defaultdict
 from itertools import combinations
 from typing import Final
 
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from joblib import parallel_backend
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import squareform
 from scipy.stats import spearmanr
 from sklearn import model_selection, metrics
-from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.inspection import permutation_importance
-from sklearn.model_selection import KFold, cross_val_score, train_test_split
-import pandas as pd
-from sklearn.neural_network import MLPClassifier, MLPRegressor
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from joblib import parallel_backend
-import matplotlib.pyplot as plt
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.preprocessing import LabelEncoder
 
 PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
@@ -123,7 +121,7 @@ def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed
     model = RandomForestRegressor(random_state=42, verbose=1)
     # model = MLPRegressor(random_state=42, max_iter=800)
 
-    cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df, cv=10, scoring='neg_root_mean_squared_error')
+    cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df, cv=10)
     print("Base Features: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
     
     # # interestingly, adding the family to the features barely improves our model
@@ -348,18 +346,17 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
 def pipeline():
     loaded_feature_df, loaded_label_df = load_df()
 
-    # # if we want to use a regression model:
-    # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
-    # with parallel_backend('threading', n_jobs=4):
-    #     # cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-    #     test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-
-
-    # if we want to use a classifier model:
-    preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # if we want to use a regression model:
+    preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
     with parallel_backend('threading', n_jobs=4):
-        cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-        # test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+        cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+        # test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+
+    # # if we want to use a classifier model:
+    # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # with parallel_backend('threading', n_jobs=4):
+    #     cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    #     # test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
     # # find min features with instance-family given as feature
     # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
