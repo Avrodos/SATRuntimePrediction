@@ -134,7 +134,7 @@ def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed
 
 
 def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
-    current_label = ['5-means_label']
+    current_label = ['3-means_label']
 
     # to ensure we have a label on each feature
     merged_df = loaded_label_df[current_label].join(loaded_feature_df, how='left')
@@ -222,7 +222,7 @@ def calc_hierarchical_clustering(feature_df, X_train, X_test, y_train, y_test):
     plt.show()
 
     # let's pick a threshold based on the dendogram
-    threshold = 1.2
+    threshold = 0.05
     cluster_ids = hierarchy.fcluster(dist_linkage, threshold, criterion="distance")
     cluster_id_to_feature_ids = defaultdict(list)
     for idx, cluster_id in enumerate(cluster_ids):
@@ -232,7 +232,7 @@ def calc_hierarchical_clustering(feature_df, X_train, X_test, y_train, y_test):
     # take only the selected columns
     X_train_sel = X_train.iloc[:, selected_features]
     X_test_sel = X_test.iloc[:, selected_features]
-
+    print(X_train_sel.columns)
     # if using a classifier
     model_on_selected_features = RandomForestClassifier(random_state=42)
     model_on_selected_features.fit(X_train_sel, y_train)
@@ -268,7 +268,7 @@ def cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed
 def test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
     # fit and test using test & train split
     # train Random Forest
-    classifier = RandomForestClassifier(random_state=42, verbose=1)
+    classifier = RandomForestClassifier(random_state=42)
 
     # first split into train and test
     X_train, X_test, y_train, y_test = train_test_split(preprocessed_feature_df, preprocessed_label_df,
@@ -346,17 +346,17 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
 def pipeline():
     loaded_feature_df, loaded_label_df = load_df()
 
-    # if we want to use a regression model:
-    preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
-    with parallel_backend('threading', n_jobs=4):
-        cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-        # test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-
-    # # if we want to use a classifier model:
-    # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # # if we want to use a regression model:
+    # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
     # with parallel_backend('threading', n_jobs=4):
-    #     cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-    #     # test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    #     cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    # test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+
+    # if we want to use a classifier model:
+    preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    with parallel_backend('threading', n_jobs=4):
+        # cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+        test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
     # # find min features with instance-family given as feature
     # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)

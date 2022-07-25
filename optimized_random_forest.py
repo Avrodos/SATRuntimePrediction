@@ -4,12 +4,10 @@ import sys
 from typing import Final
 
 import numpy as np
-
 # first argument should be path to feature file, second argument is path to label file
 import pandas as pd
-from sklearn import metrics
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.model_selection import RandomizedSearchCV, train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import RandomizedSearchCV, cross_val_score
 
 PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
@@ -31,7 +29,7 @@ def load_df():
 
     # if we are using merged_df, we have to split into feature and labels df again
     feature_df = merged_df.drop(merged_df.columns[0:len(label_df.columns)], axis=1)
-    label_df = merged_df['log_parity_two_label']
+    label_df = merged_df['3-means_label']
     return feature_df, label_df.values.ravel()
 
 
@@ -64,7 +62,7 @@ if __name__ == '__main__':
 
     # Use the random grid to search for best hyperparameters
     # First create the base model to tune
-    rf = RandomForestRegressor()
+    rf = RandomForestClassifier()
     # Random search of parameters, using 3 fold cross validation,
     # search across 100 different combinations, and use all available cores
     rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid, n_iter=100, cv=3, verbose=2,
@@ -75,7 +73,7 @@ if __name__ == '__main__':
     print(rf_random.best_params_)
 
     # now compare random search results to base model:
-    base_model = RandomForestRegressor(random_state=0)
+    base_model = RandomForestClassifier(random_state=0)
     # cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
     cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10)
     print("Base Model: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
@@ -83,10 +81,24 @@ if __name__ == '__main__':
     # these values are based on random search results
     # best_random = RandomForestClassifier(random_state=0, n_estimators=400, min_samples_split=5, min_samples_leaf=1, max_features='sqrt', max_depth=60, bootstrap=True)
     # best_random = RandomForestRegressor(random_state=0, n_estimators=800, min_samples_split=2, min_samples_leaf=1, max_features='sqrt', max_depth=90, bootstrap=True)
-    best_random = RandomForestRegressor(random_state=0, n_estimators=400, min_samples_split=2, min_samples_leaf=1,
-                                        max_features='sqrt', max_depth=None, bootstrap=True)
+    # best_random = RandomForestRegressor(random_state=0, n_estimators=400, min_samples_split=2, min_samples_leaf=1,
+    #                                     max_features='sqrt', max_depth=None, bootstrap=True)
+    best_random = RandomForestClassifier(random_state=0)
     # cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
-    cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10)
+    sel_feature_list = ['#Nodes', '#Edges', '#ConnectedComponents', 'MeanDegreeCentrality',
+                        'MinDegreeCentrality', 'MaxDegreeCentrality', 'VarDegreeCentrality',
+                        'EntropyDegreeCentrality', 'DegreeAssortativity', 'Centralization',
+                        'MeanEigenvectorCentrality', 'MinEigenvectorCentrality',
+                        'MaxEigenvectorCentrality', 'VarEigenvectorCentrality',
+                        'EntropyEigenvectorCentrality', 'MaxPageRank', 'VarPageRank',
+                        'EntropyPageRank', 'MeanKatzCentrality', 'MinKatzCentrality',
+                        'MaxKatzCentrality', 'VarKatzCentrality', 'EntropyKatzCentrality',
+                        'MeanBetweennessCentrality', 'MinBetweennessCentrality',
+                        'MaxBetweennessCentrality', 'EntropyBetweennessCentrality',
+                        'MeanCommunitySize', 'MinCommunitySize', 'MaxCommunitySize',
+                        'VarCommunitySize', 'EntropyCommunitySize', 'ClusterImbalance',
+                        'IsProperClustering', 'IsSingletonClustering', 'IsOneClustering',
+                        'EdgeCut', 'EdgeCutFraction', 'Modularity', 'HubDominance']
+    sel_feature_df = loaded_feature_df[loaded_feature_df.columns.intersection(sel_feature_list)]
+    cv_scores = cross_val_score(best_random, sel_feature_df, loaded_label_df, cv=10)
     print("Optimized Model: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
-    #
-    # # TODO: We can further optimize using grid search near our current parameters and then train on the complete set in the end
