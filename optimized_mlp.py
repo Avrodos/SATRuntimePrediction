@@ -104,16 +104,26 @@ if __name__ == '__main__':
     print(scores_df)
     scores_df.to_csv('hyperparam_optimization_results.csv')
 
-    # # now compare random search results to base model:
-    # base_model = MLPClassifier(random_state=42)
+    # now compare random search results to base model:
+    # First create the base model
+    # base_model = MLPClassifier(random_state=42, max_iter=900)
+    # # build pipeline
+    # base_pipeline = Pipeline(steps=[
+    #     ('scaler', StandardScaler()),
+    #     ('model', base_model)
+    # ])
     # # cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
-    # cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10)
+    # cv_scores = cross_val_score(base_pipeline, loaded_feature_df, loaded_label_df, cv=10)
     # print("Base Model: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
-    #
-    # # these values are based on random search results
-    # best_random = MLPClassifier(random_state=42)
+
+    # # these values are based on random search results - even the best random grid model is worse
+    # # than the base model with increased iterations
+    # random_model = MLPClassifier(random_state=42, solver='lbfgs', max_iter=100, hidden_layer_sizes=(100,100))
+    # # build pipeline
+    # random_pipeline = Pipeline(steps=[
+    #     ('scaler', StandardScaler()),
+    #     ('model', random_model)
+    # ])
     # # cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
-    # cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10)
+    # cv_scores = cross_val_score(random_pipeline, loaded_feature_df, loaded_label_df, cv=10)
     # print("Optimized Model: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
-    # #
-    # # # TODO: We can further optimize using grid search near our current parameters and then train on the complete set in the end
