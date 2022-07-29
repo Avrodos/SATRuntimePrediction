@@ -134,7 +134,7 @@ def calculate_min_labels():
 
 
 def calculate_time_mean_per_features():
-    input_time_path = os.getcwd() + '/data/measured_data/SAT_time'
+    input_time_path = os.getcwd() + '/data/measured_data/SAT_time.csv'
     output_time_path = os.getcwd() + '/data/measured_data/SAT_time_labels.csv'
 
     # read the time df

@@ -134,7 +134,7 @@ def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed
 
 
 def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
-    current_label = ['3-means_label']
+    current_label = ['all_families']
 
     # to ensure we have a label on each feature
     merged_df = loaded_label_df[current_label].join(loaded_feature_df, how='left')
@@ -182,11 +182,14 @@ def calc_permutation_importance(feature_df, X_train, y_train, classifier):
     ax1.set_yticks(tree_indices)
     ax1.set_yticklabels(feature_df.columns[tree_importance_sorted_idx])
     ax1.set_ylim((0, len(classifier.feature_importances_)))
+    ax1.set_title('Tree Based Feature Importance')
     ax2.boxplot(
         result.importances[perm_sorted_idx].T,
         vert=False,
         labels=feature_df.columns[perm_sorted_idx],
     )
+    ax2.set_title('Permutation Feature Importance')
+    plt.title('Feature Importance on All-Families Classification')
     fig.tight_layout()
     plt.show()
 

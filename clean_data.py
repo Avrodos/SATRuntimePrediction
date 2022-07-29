@@ -21,11 +21,11 @@ def main():
     df = df.drop('Time_Diameter', axis=1)
     df = df.drop('Time_EffectiveDiameterApproximation', axis=1)
     df.set_index('hash', inplace=True)
-    df.to_csv(cwd + "/data/measured_data/with_duplicate_hashes/SAT_time")
+    df.to_csv(cwd + "/data/measured_data/with_duplicate_hashes/SAT_time.csv")
 
     # remove non-unique rows from features df
     df = df.drop_duplicates(['hash'])
-    df.to_csv(cwd + "/data/measured_data/SAT_features")
+    df.to_csv(cwd + "/data/measured_data/SAT_features.csv")
 
     # merge df to only keep rows for which we have features AND labels
     label_df = pd.read_csv(PATH_LABELS)

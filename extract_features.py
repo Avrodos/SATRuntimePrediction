@@ -5,9 +5,11 @@ import sys
 import time
 from math import e, log
 from typing import Final
+
 import networkit as nk
 import numpy as np
 import pandas as pd
+
 # import networkx as nx
 
 SRC_DIR: Final[str] = sys.argv[1]
@@ -334,20 +336,15 @@ def calculate_small_world(given_graph):
     return data_df, time_df
 
 
-def main():
+def load_graph():
     # to strip ending of file path, e.g. '.cnf' or '.csv'
     file_name = os.path.basename(SRC_DIR)
     file_name_without_ending = os.path.splitext(file_name)[0]
     # we will use the file names for the id during the rest of the project
     current_id = file_name_without_ending.replace('_METIS', '')
-    full_output_path_features = FEATURE_OUTPUT_DIR + current_id + FEATURE_FILE_ENDING
-    full_output_path_time = FEATURE_OUTPUT_DIR + current_id + TIME_FILE_ENDING
     unzipped_file_path = os.path.splitext(SRC_DIR)[0]
-    # check whether the given file already exists
-    if os.path.exists(full_output_path_features):
-        return
 
-    #unzip first
+    # unzip first
     with gzip.open(SRC_DIR, 'rb') as f_in:
         with open(unzipped_file_path, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -356,9 +353,18 @@ def main():
     main_time_start = time.process_time()
     metis_reader = nk.graphio.METISGraphReader()
     graph = metis_reader.read(unzipped_file_path)
+    local_time_read_graph = time.process_time() - main_time_start
+
+    # delete unzipped file again
+    if os.path.exists(unzipped_file_path):
+        os.remove(unzipped_file_path)
+
+    return current_id, graph, local_time_read_graph
+
+
+def extract_features(current_id, graph, time_read_graph=0):
     num_nodes = graph.numberOfNodes()
     num_edges = graph.numberOfEdges()
-    time_read_graph = time.process_time() - main_time_start
     # our feature df which should contain all features in the end
     feature_df = pd.DataFrame({'ID': [current_id], '#Nodes': [num_nodes], '#Edges': [num_edges]})
     # time df which tells us how long the computation of each feature took
@@ -393,15 +399,23 @@ def main():
          time_clustering_features], axis=1)
     time_feature_df.set_index('ID', inplace=True)
 
-    feature_df.to_csv(full_output_path_features)
-    time_feature_df.to_csv(full_output_path_time)
-    print(feature_df)
+    return feature_df, time_feature_df
 
-    # delete unzipped file again
-    if os.path.exists(unzipped_file_path):
-        os.remove(unzipped_file_path)
+
+def pipeline():
+    loaded_id, loaded_graph, time_read_graph = load_graph()
+    full_output_path_features = FEATURE_OUTPUT_DIR + loaded_id + FEATURE_FILE_ENDING
+    full_output_path_time = FEATURE_OUTPUT_DIR + loaded_id + TIME_FILE_ENDING
+    # check whether the given file already exists
+    if os.path.exists(full_output_path_features):
+        return
+    # extract features
+    feature_df, time_df = extract_features(loaded_id, loaded_graph, time_read_graph)
+    # write features into a file
+    feature_df.to_csv(full_output_path_features)
+    time_df.to_csv(full_output_path_time)
 
 
 # script receives file path  of a METIS graph as input parameter
 if __name__ == '__main__':
-    main()
+    pipeline()
