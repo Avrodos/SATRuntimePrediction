@@ -45,19 +45,18 @@ def create_vig_from_file(path: str):
 
 
 def create_graph():
-    # to strip ending of file path, e.g. '.cnf'
-    file_name = os.path.basename(SRC_DIR)
-    file_name_without_ending = os.path.splitext(file_name)[0]
     # we will measure time from reading the cnf to creating the graph
     time_start = time.process_time()
     graph = create_vig_from_file(SRC_DIR)
     time_create_graph = time.process_time() - time_start
-    return file_name_without_ending, graph, time_create_graph
+    return graph, time_create_graph
 
 
 # script receives file path  of a .cnf as input parameter
 def pipeline():
-    current_id, graph, time_create_graph = create_graph()
+    # to strip ending of file path, e.g. '.cnf'
+    file_name = os.path.basename(SRC_DIR)
+    current_id = os.path.splitext(file_name)[0]
 
     full_output_path_features = FEATURE_OUTPUT_DIR + current_id + FEATURE_FILE_ENDING
     full_output_path_time = FEATURE_OUTPUT_DIR + current_id + TIME_FILE_ENDING
@@ -65,6 +64,9 @@ def pipeline():
     if os.path.exists(full_output_path_features):
         return
 
+    # create the VIG in memory
+    graph, time_create_graph = create_graph()
+    # extract the feature
     feature_df, time_df = extract_features(current_id, graph, time_create_graph)
     # write features into a file
     feature_df.to_csv(full_output_path_features)

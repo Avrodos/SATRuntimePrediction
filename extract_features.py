@@ -85,17 +85,18 @@ def calculate_centrality(given_graph):
     centralization = deg_cen.centralization()
     time_centralization = time.process_time() - time_start
 
-    # Eigenvector Centrality
-    time_start = time.process_time()
-    eigenvector_cen = nk.centrality.EigenvectorCentrality(given_graph)
-    eigenvector_cen.run()
-    np_array_eigenvector_cen = np.array(eigenvector_cen.scores(), float)
-    mean_eigenvector_cen = np.mean(np_array_eigenvector_cen)
-    min_eigenvector_cen = np.min(np_array_eigenvector_cen)
-    max_eigenvector_cen = np.max(np_array_eigenvector_cen)
-    var_eigenvector_cen = np.var(np_array_eigenvector_cen)
-    entropy_eigenvector_cen = calculate_entropy(np_array_eigenvector_cen)
-    time_eigenvector_cen = time.process_time() - time_start
+    # also takes too long
+    # # Eigenvector Centrality
+    # time_start = time.process_time()
+    # eigenvector_cen = nk.centrality.EigenvectorCentrality(given_graph)
+    # eigenvector_cen.run()
+    # np_array_eigenvector_cen = np.array(eigenvector_cen.scores(), float)
+    # mean_eigenvector_cen = np.mean(np_array_eigenvector_cen)
+    # min_eigenvector_cen = np.min(np_array_eigenvector_cen)
+    # max_eigenvector_cen = np.max(np_array_eigenvector_cen)
+    # var_eigenvector_cen = np.var(np_array_eigenvector_cen)
+    # entropy_eigenvector_cen = calculate_entropy(np_array_eigenvector_cen)
+    # time_eigenvector_cen = time.process_time() - time_start
 
     # Page Rank
     time_start = time.process_time()
@@ -144,11 +145,11 @@ def calculate_centrality(given_graph):
         'DegreeAssortativity': [deg_assortativity],
         'Centralization': [centralization],
 
-        'MeanEigenvectorCentrality': [mean_eigenvector_cen],
-        'MinEigenvectorCentrality': [min_eigenvector_cen],
-        'MaxEigenvectorCentrality': [max_eigenvector_cen],
-        'VarEigenvectorCentrality': [var_eigenvector_cen],
-        'EntropyEigenvectorCentrality': [entropy_eigenvector_cen],
+        # 'MeanEigenvectorCentrality': [mean_eigenvector_cen],
+        # 'MinEigenvectorCentrality': [min_eigenvector_cen],
+        # 'MaxEigenvectorCentrality': [max_eigenvector_cen],
+        # 'VarEigenvectorCentrality': [var_eigenvector_cen],
+        # 'EntropyEigenvectorCentrality': [entropy_eigenvector_cen],
 
         'MeanPageRank': [mean_page_rank],
         'MinPageRank': [min_page_rank],
@@ -173,7 +174,7 @@ def calculate_centrality(given_graph):
         'Time_DegreeCentrality': [time_deg_cen],
         'Time_DegreeAssortativity': [time_deg_assortativity],
         'Time_Centralization': [time_centralization],
-        'Time_EigenvectorCentrality': [time_eigenvector_cen],
+        # 'Time_EigenvectorCentrality': [time_eigenvector_cen],
         'Time_PageRank': [time_page_rank],
         'Time_KatzCentrality': [time_katz_cen],
         'Time_BetweennessCentrality': [time_betweenness_cen]
