@@ -1,0 +1,16 @@
+  ,features                                                                               ,cv_scores_mean     ,cv_std
+0 ,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')",0.9432614603447043 ,0.011740296153308237
+1 ,"('#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')"                        ,0.9246316956304084 ,0.013003065514591506
+2 ,"('#ConnectedComponents', '#Nodes', 'MeanDegreeCentrality')"                           ,0.9182829149681757 ,0.012615180252133467
+3 ,"('#ConnectedComponents', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')"          ,0.9165790602874919 ,0.015353741065507185
+4 ,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality')"                        ,0.8945898591146392 ,0.02483457464413677
+5 ,"('EntropyDegreeCentrality', 'MeanDegreeCentrality')"                                  ,0.8810215976542946 ,0.016531342826409057
+6 ,"('#Nodes', 'MeanDegreeCentrality')"                                                   ,0.8797486233283273 ,0.020576972811982973
+7 ,"('#ConnectedComponents', 'MeanDegreeCentrality')"                                     ,0.8391099907029964 ,0.026023736830127844
+8 ,"('#Nodes', 'EntropyDegreeCentrality')"                                                ,0.828954802259887  ,0.01841827750553607
+9 ,"('#ConnectedComponents', 'EntropyDegreeCentrality')"                                  ,0.7967853822498749 ,0.015346590798625975
+10,"('#ConnectedComponents', '#Nodes')"                                                   ,0.7845097618536795 ,0.02239035897748021
+11,"('MeanDegreeCentrality',)"                                                            ,0.6896713866838302 ,0.026029674562903758
+12,"('EntropyDegreeCentrality',)"                                                         ,0.6003414860902525 ,0.02146764582798692
+13,"('#Nodes',)"                                                                          ,0.5685850675820638 ,0.02753969666831096
+14,"('#ConnectedComponents',)"                                                            ,0.46784667095759136,0.021988548677350166

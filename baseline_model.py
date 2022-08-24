@@ -78,15 +78,22 @@ def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
 def compare_model_to_features_with_family(model, preprocessed_feature_df, preprocessed_label_df):
     # add family as feature
     features_with_family = add_family_as_feature(preprocessed_feature_df)
-    
+
     # replace a family name with an arbitrary, but consistent, number
     features_with_family = string_to_numerical_feature_encoder(features_with_family)
 
     # # one-hot encoding:
     # features_with_family = pd.get_dummies(features_with_family)
 
+    # # to plot the distribution of our families
+    # plt.hist(features_with_family['family'], 88)
+    # plt.ylabel('Frequency')
+    # plt.xlabel('Family')
+    # plt.show()
+
     cv_scores = cross_val_score(model, features_with_family, preprocessed_label_df, cv=10)
-    print("Features with family: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
+    print(
+        "Features with family: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
 
 
 def compare_model_to_features_with_category(model, preprocessed_feature_df, preprocessed_label_df):
@@ -182,14 +189,11 @@ def calc_permutation_importance(feature_df, X_train, y_train, classifier):
     ax1.set_yticks(tree_indices)
     ax1.set_yticklabels(feature_df.columns[tree_importance_sorted_idx])
     ax1.set_ylim((0, len(classifier.feature_importances_)))
-    ax1.set_title('Tree Based Feature Importance')
     ax2.boxplot(
         result.importances[perm_sorted_idx].T,
         vert=False,
         labels=feature_df.columns[perm_sorted_idx],
     )
-    ax2.set_title('Permutation Feature Importance')
-    plt.title('Feature Importance on All-Families Classification')
     fig.tight_layout()
     plt.show()
 
@@ -322,6 +326,7 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
         # current_measure = "r2_score"
 
         model = RandomForestRegressor(random_state=0, verbose=1)
+        model = RandomForestClassifier(random_state=0, verbose=1)
         cv_scores = cross_val_score(model, X, preprocessed_label_df, cv=10)
         print("Base Features: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
         row_res = {"features": comb_features, "cv_scores_mean": cv_scores.mean(), "cv_std": cv_scores.std()}
@@ -343,26 +348,27 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
     # sorted_results.to_csv(os.getcwd() + "/data/measured_data/test_train_scores_max_4_features.csv")
 
     # save cv results
-    sorted_results.to_csv(os.getcwd() + "/data/measured_data/cv_scores_max_4_features.csv")
+    sorted_results.to_csv(os.getcwd() + "/data/measured_data/classification_cv_scores_max_4_features.csv")
 
 
 def pipeline():
     loaded_feature_df, loaded_label_df = load_df()
 
     # # if we want to use a regression model:
-    # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
-    # with parallel_backend('threading', n_jobs=4):
-    #     cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-    # test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-
-    # if we want to use a classifier model:
-    preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
     with parallel_backend('threading', n_jobs=4):
-        # cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-        test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+        cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
-    # # find min features with instance-family given as feature
+    # # if we want to use a classifier model:
+    # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # with parallel_backend('threading', n_jobs=4):
+    #     # cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    #     test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+
+    # find min features with instance-family given as feature
     # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
     # with parallel_backend('threading', n_jobs=4):
     #     find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df)
 
