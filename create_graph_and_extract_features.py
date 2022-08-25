@@ -1,14 +1,19 @@
+import gzip
 import math
+import multiprocessing
+import multiprocessing as mp
 import os
+import shutil
 import sys
 import time
 from typing import Final
 
 import networkit as nk
+import pandas as pd
 
 from extract_features import extract_features
 
-SRC_DIR: Final[str] = sys.argv[1]
+SRC_DIR: Final[str] = sys.argv[1]  # path to csv containing list of files
 FEATURE_OUTPUT_DIR: Final[str] = 'data/measured_data/'
 FEATURE_FILE_ENDING: Final[str] = '_features'
 TIME_FILE_ENDING: Final[str] = '_time'
@@ -44,19 +49,19 @@ def create_vig_from_file(path: str):
     return file_graph
 
 
-def create_graph():
+def create_graph(filepath):
     # we will measure time from reading the cnf to creating the graph
     time_start = time.process_time()
-    graph = create_vig_from_file(SRC_DIR)
+    graph = create_vig_from_file(filepath)
     time_create_graph = time.process_time() - time_start
     return graph, time_create_graph
 
 
 # script receives file path  of a .cnf as input parameter
-def pipeline():
+def pipeline(meta_dict):
     # to strip ending of file path, e.g. '.cnf'
-    file_name = os.path.basename(SRC_DIR)
-    current_id = os.path.splitext(file_name)[0]
+    current_id = meta_dict['hash']
+    current_path = meta_dict['path']
 
     full_output_path_features = FEATURE_OUTPUT_DIR + current_id + FEATURE_FILE_ENDING
     full_output_path_time = FEATURE_OUTPUT_DIR + current_id + TIME_FILE_ENDING
@@ -64,8 +69,19 @@ def pipeline():
     if os.path.exists(full_output_path_features):
         return
 
+    # unzip given file
+    unzipped_file_path = os.path.splitext(current_path)[0]
+    with gzip.open(SRC_DIR, 'rb') as f_in:
+        with open(unzipped_file_path, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
     # create the VIG in memory
-    graph, time_create_graph = create_graph()
+    graph, time_create_graph = create_graph(current_path)
+
+    # delete unzipped file again
+    if os.path.exists(unzipped_file_path):
+        os.remove(unzipped_file_path)
+
     # extract the feature
     feature_df, time_df = extract_features(current_id, graph, time_create_graph)
     # write features into a file
@@ -74,4 +90,8 @@ def pipeline():
 
 
 if __name__ == '__main__':
-    pipeline()
+    input_df = pd.read_csv(SRC_DIR)
+    input_df = input_df[['hash', 'path']]  # we only need these right now
+    cpu_count = max(multiprocessing.cpu_count() - 1, 1)  # ensures atleast 1 process
+    with mp.Pool(cpu_count) as p:
+        p.map(pipeline, input_df.to_dict('records'))

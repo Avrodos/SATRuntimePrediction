@@ -23,5 +23,7 @@ if __name__ == '__main__':
 
     # we only want to use instances, for which we have the file AND the runtime
     merged_df = pd.merge(meta_df, runtime_df, left_index=True, right_index=True)
+    merged_df.reset_index(inplace=True)
+    merged_df.set_index('hash', inplace=True)
     merged_df.to_csv('data/instances/prepared-anni-seq.csv')
     print(runtime_df)
