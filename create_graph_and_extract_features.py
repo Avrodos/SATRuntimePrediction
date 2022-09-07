@@ -63,6 +63,9 @@ def pipeline(meta_dict):
     current_id = meta_dict['hash']
     current_path = meta_dict['path']
 
+    # we need to replace the prefix
+    current_path = current_path.replace('raid/gbd/cnf-3/', 'workspace/iser/cnf/')
+
     full_output_path_features = FEATURE_OUTPUT_DIR + current_id + FEATURE_FILE_ENDING
     full_output_path_time = FEATURE_OUTPUT_DIR + current_id + TIME_FILE_ENDING
     # check whether the given file already exists
