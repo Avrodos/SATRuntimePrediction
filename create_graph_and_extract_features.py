@@ -7,7 +7,7 @@ import shutil
 import sys
 import time
 from typing import Final
-
+import lzma
 import networkit as nk
 import pandas as pd
 
@@ -73,10 +73,11 @@ def pipeline(meta_dict):
         return
 
     # unzip given file
-    unzipped_file_path = os.path.splitext(current_path)[0]
-    with gzip.open(SRC_DIR, 'rb') as f_in:
-        with open(unzipped_file_path, 'wb') as f_out:
+    unzipped_file_path = '/home/ahmad/temp/' + current_id + '.cnf'
+    with lzma.open(current_path, mode='rt', encoding='utf-8') as f_in:
+        with open(unzipped_file_path, 'w+') as f_out:
             shutil.copyfileobj(f_in, f_out)
+    current_path = unzipped_file_path
 
     # create the VIG in memory
     graph, time_create_graph = create_graph(current_path)
