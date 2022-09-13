@@ -48,14 +48,15 @@ def string_to_numerical_feature_encoder(feature_df):
 
 
 def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
-    current_label = ['parity_two_label']
+    current_label = ['log10_parity_two_label']
 
     # to ensure we have a label on each feature
     merged_df = loaded_label_df[current_label].join(loaded_feature_df, how='left')
     # we need to drop nan instances
     merged_df.dropna(inplace=True)
-    # # drop timeouts and 0's
-    # merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(10000)) & (merged_df.log10_parity_two_label != np.log10(0))]
+    # drop timeouts and 0's
+    merged_df = merged_df[
+        (merged_df.log10_parity_two_label != np.log10(10000)) & (merged_df.log10_parity_two_label != np.log10(0))]
     # # drop only the 0's
     # merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
 
@@ -120,7 +121,7 @@ def test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, prepr
 
     # to calc and see hierarchical clustering based on spearman rank-order
     # necessary to handle multi collinear features
-    calc_hierarchical_clustering(preprocessed_feature_df, X_train, X_test, y_train, y_test)
+    # calc_hierarchical_clustering(preprocessed_feature_df, X_train, X_test, y_train, y_test)
 
 
 def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
@@ -128,7 +129,7 @@ def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed
     model = RandomForestRegressor(random_state=42, verbose=1)
     # model = MLPRegressor(random_state=42, max_iter=800)
 
-    cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df, cv=10)
+    cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df, cv=10, scoring='r2')
     print("Base Features: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
     
     # # interestingly, adding the family to the features barely improves our model
@@ -358,7 +359,7 @@ def pipeline():
     preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
     with parallel_backend('threading', n_jobs=4):
         cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-    test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    # test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
     # # if we want to use a classifier model:
     # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
