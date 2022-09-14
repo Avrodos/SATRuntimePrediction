@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 
 def kmeans_cluster_labels():
     label_df = pd.read_csv('data/runtimes/extended_runtime_labels.csv', index_col=0)
-    current_label = 'parity_two_label'
+    current_label = 'log10_parity_two_label'
     print(label_df.columns.tolist())
     # number of clusters
     k = 3
@@ -14,7 +14,10 @@ def kmeans_cluster_labels():
     kmeans_df = pd.DataFrame(label_df[current_label])
     # we have to drop nan's
     kmeans_df.dropna(inplace=True)
+    # drop only the 0's
+    kmeans_df = kmeans_df[(kmeans_df.log10_parity_two_label != np.log10(0))]
     # execute kmeans and retrieve labels
+
     kmeans_df[new_label_name] = kmeans.fit_predict(kmeans_df)
     # drop old label column
     kmeans_df = kmeans_df.drop(labels=current_label, axis=1)
@@ -67,27 +70,27 @@ def calculate_new_labels():
 
 
 if __name__ == '__main__':
-    # load and merge both runtime files
-    all_new_runtimes_df = pd.read_csv('data/instances/prepared-anni-seq.csv', index_col=0)
-    all_new_runtimes_df.sort_index(inplace=True)
-    old_runtimes_df = pd.read_csv('data/runtimes/solver_runtimes.csv', index_col=0)
-    old_runtimes_df.sort_index(inplace=True)
-    merged_df = all_new_runtimes_df.join(old_runtimes_df, how='outer')
-
-    # remove non-runtime columns
-    merged_df.drop(merged_df.iloc[:, 0:4], inplace=True, axis=1)
-    merged_df.to_csv('data/runtimes/extended_solver_runtimes.csv')
-
-    # calculate new labels
-    merged_df = calculate_new_labels()
-
-    # split into two df's again and save
-    runtime_df = merged_df[['parity_two_label', 'log10_parity_two_label']]
-    feature_df = merged_df.drop(['parity_two_label', 'log10_parity_two_label'], axis=1)
-
-    # save
-    runtime_df.to_csv('data/runtimes/extended_runtime_labels.csv')
-    feature_df.to_csv('data/measured_data/extended_SAT_features.csv')
+    # # load and merge both runtime files
+    # all_new_runtimes_df = pd.read_csv('data/instances/prepared-anni-seq.csv', index_col=0)
+    # all_new_runtimes_df.sort_index(inplace=True)
+    # old_runtimes_df = pd.read_csv('data/runtimes/solver_runtimes.csv', index_col=0)
+    # old_runtimes_df.sort_index(inplace=True)
+    # merged_df = all_new_runtimes_df.join(old_runtimes_df, how='outer')
+    #
+    # # remove non-runtime columns
+    # merged_df.drop(merged_df.iloc[:, 0:4], inplace=True, axis=1)
+    # merged_df.to_csv('data/runtimes/extended_solver_runtimes.csv')
+    #
+    # # calculate new labels
+    # merged_df = calculate_new_labels()
+    #
+    # # split into two df's again and save
+    # runtime_df = merged_df[['parity_two_label', 'log10_parity_two_label']]
+    # feature_df = merged_df.drop(['parity_two_label', 'log10_parity_two_label'], axis=1)
+    #
+    # # save
+    # runtime_df.to_csv('data/runtimes/extended_runtime_labels.csv')
+    # feature_df.to_csv('data/measured_data/extended_SAT_features.csv')
 
     # k means label
     label_df = kmeans_cluster_labels()
