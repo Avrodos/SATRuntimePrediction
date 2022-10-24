@@ -50,7 +50,7 @@ def string_to_numerical_feature_encoder(feature_df):
 
 def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
     # choose current label
-    current_label = ['parity_two_label  ']
+    current_label = ['log10_parity_two_label']
 
     # to ensure we have a label on each feature
     merged_df = loaded_label_df[current_label].join(loaded_feature_df, how='left')
@@ -60,11 +60,12 @@ def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
     # merged_df = merged_df[
     #     (merged_df.log10_parity_two_label != np.log10(10000)) & (merged_df.log10_parity_two_label != np.log10(0))]
     # drop only the 0's
-    # merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
+    merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
 
     # if we are using merged_df, we have to split into feature and labels df again
     feature_df = merged_df.drop(labels=current_label, axis=1)
     label_df = merged_df[current_label]
+    print(pd.DataFrame(label_df).describe())
     # # scale features beforehand:
     # sc = StandardScaler()
     # feature_df = sc.fit_transform(feature_df)
@@ -126,8 +127,6 @@ def test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, prepr
 
 
 def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
-    print(preprocessed_label_df.describe())
-
     # train and evaluate Random Forest
     model = RandomForestRegressor(random_state=42, verbose=1)
     # model = SVR()
@@ -139,12 +138,12 @@ def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed
 
     # for R2-score
     cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df, cv=10, scoring='r2')
-    print("Base Features: %0.4f score with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
+    print("R2 Score: %0.4f score with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
 
     # for RMSE:
     cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df, cv=10,
                                 scoring='neg_root_mean_squared_error')
-    print("Base Features: %0.4f RMSE with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
+    print("RMSE: %0.4f RMSE with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
 
     # # interestingly, adding the family to the features barely improves our model
     # compare_model_to_features_with_family(model, preprocessed_feature_df, preprocessed_label_df)
@@ -170,7 +169,7 @@ def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
     # if we are using merged_df, we have to split into feature and labels df again
     feature_df = merged_df.drop(labels=current_label, axis=1)
     label_df = merged_df[current_label]
-    # print(pd.DataFrame(label_df).describe())
+    print(pd.DataFrame(label_df).describe())
 
     # # scale features beforehand:
     # sc = StandardScaler()
@@ -332,7 +331,7 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
     features_with_family = string_to_numerical_feature_encoder(features_with_family)
 
     # Create combinations of features as list
-    combo_len = 5
+    combo_len = 6
     combo_fall_feat = sum([list(combinations(features_with_family, i)) for i in range(1, combo_len)], [])
     results = []
 
@@ -352,8 +351,8 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
         # row_res = {"features": comb_features, "r2_score": r2_score, "feature_importances_": clf.feature_importances_}
         # current_measure = "r2_score"
 
-        # model = RandomForestRegressor(random_state=0, verbose=1)
-        model = RandomForestClassifier(random_state=0, verbose=1)
+        model = RandomForestRegressor(random_state=0, verbose=1)
+        # model = RandomForestClassifier(random_state=0, verbose=1)
         cv_scores = cross_val_score(model, X, preprocessed_label_df, cv=10)
         print("Base Features: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
         row_res = {"features": comb_features, "cv_scores_mean": cv_scores.mean(), "cv_std": cv_scores.std()}
@@ -376,7 +375,7 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
 
     # save cv results
     sorted_results.to_csv(
-        os.getcwd() + "/data/measured_data/extended_family_classification_cv_scores_max_4_features.csv")
+        os.getcwd() + "/data/measured_data/only_new_regression_cv_scores_max_5_features.csv")
 
 
 def pipeline():
@@ -390,16 +389,16 @@ def pipeline():
     # test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
     # if we want to use a classifier model:
-    preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
-    with parallel_backend('threading', n_jobs=4):
-        cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # with parallel_backend('threading', n_jobs=4):
+    #     cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
         # test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
     # find min features with instance-family given as feature
-    # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
-    # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
-    # with parallel_backend('threading', n_jobs=4):
-    #     find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df)
+    preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
+    preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    with parallel_backend('threading', n_jobs=4):
+        find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df)
 
 
 
