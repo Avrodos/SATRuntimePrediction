@@ -7,20 +7,23 @@ import numpy as np
 import pandas as pd
 
 PATH_DF: Final[str] = sys.argv[1]
-PATH_LABELS: Final[str] = sys.argv[2]
+# PATH_LABELS: Final[str] = sys.argv[2]
 
 
 def main():
     # current working directory
     cwd = os.getcwd()
 
+    # remove unnecessary whitespace
+    df = pd.read_csv(PATH_DF, skipinitialspace=True, index_col=0)
+    df["family"] = df["family"].str.strip()
+    df.to_csv(cwd + "/data/runtimes/only_new_runtime_labels.csv")
+
     # used to split the two merged data sets
-    df = pd.read_csv(PATH_DF, index_col=0)
     df['CaDiCaL_DVDL_V1'].replace('               ', np.nan, inplace=True)
     df.dropna(subset='CaDiCaL_DVDL_V1', inplace=True)
     print(df.columns.get_loc('kissat_relaxed'))
     df.drop(df.iloc[:, 28:], axis=1, inplace=True)
-    df.to_csv(cwd + "/data/runtimes/only_new_solver_runtimes.csv")
 
     # remove suffixes from feature df
     df = pd.read_csv(PATH_DF)

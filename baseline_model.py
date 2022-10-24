@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder
 
 PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
@@ -160,7 +160,7 @@ def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
     # loaded_label_df = add_family_to_df(loaded_label_df)
 
     # choose current label
-    current_label = ['3-means_label']
+    current_label = ['family']
 
     # to ensure we have a label on each feature
     merged_df = loaded_label_df[current_label].join(loaded_feature_df, how='left')
@@ -172,9 +172,9 @@ def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
     label_df = merged_df[current_label]
     # print(pd.DataFrame(label_df).describe())
 
-    # scale features beforehand:
-    sc = StandardScaler()
-    feature_df = sc.fit_transform(feature_df)
+    # # scale features beforehand:
+    # sc = StandardScaler()
+    # feature_df = sc.fit_transform(feature_df)
     #
     # # dimensionality reduction using a PCA:
     # pca = PCA(n_components=30)
@@ -281,8 +281,8 @@ def calc_hierarchical_clustering(feature_df, X_train, X_test, y_train, y_test):
 
 def cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
     # define model
-    # classifier = RandomForestClassifier(random_state=42, verbose=1)
-    classifier = MLPClassifier(random_state=42)
+    classifier = RandomForestClassifier(random_state=42, verbose=1)
+    # classifier = MLPClassifier(random_state=42)
     # classifier = SVC(random_state=42, verbose=1)
     # classifier = AdaBoostClassifier(random_state=42)
     # classifier = KNeighborsClassifier(4)
@@ -392,8 +392,8 @@ def pipeline():
     # if we want to use a classifier model:
     preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
     with parallel_backend('threading', n_jobs=4):
-        # cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-        test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+        cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+        # test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
     # find min features with instance-family given as feature
     # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
