@@ -135,7 +135,7 @@ def calculate_min_labels():
 
 def calculate_time_mean_per_features():
     input_time_path = os.getcwd() + '/data/measured_data/SAT_time.csv'
-    output_time_path = os.getcwd() + '/data/measured_data/SAT_time_labels.csv'
+    output_time_path = os.getcwd() + '/data/measured_data/SAT_feature_extraction_time_categories.csv'
 
     # read the time df
     input_time_df = pd.read_csv(input_time_path, index_col=0)

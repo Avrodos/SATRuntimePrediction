@@ -15,7 +15,8 @@ from sklearn import model_selection, metrics
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
@@ -28,11 +29,11 @@ def load_df():
     return feature_df, label_df
 
 
-def add_family_as_feature(preprocessed_feature_df):
+def add_family_to_df(preprocessed_df):
     # We can add the family to the features
     family_df = pd.read_csv(os.getcwd() + "/data/meta_data/hash_to_family_mapping.csv")
     family_df.set_index('hash', inplace=True)
-    preprocessed_feature_df = preprocessed_feature_df.join(family_df, how='left')
+    preprocessed_feature_df = preprocessed_df.join(family_df, how='left')
     return preprocessed_feature_df
 
 
@@ -48,22 +49,22 @@ def string_to_numerical_feature_encoder(feature_df):
 
 
 def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
-    current_label = ['log10_parity_two_label']
+    # choose current label
+    current_label = ['parity_two_label  ']
 
     # to ensure we have a label on each feature
     merged_df = loaded_label_df[current_label].join(loaded_feature_df, how='left')
     # we need to drop nan instances
     merged_df.dropna(inplace=True)
     # drop timeouts and 0's
-    merged_df = merged_df[
-        (merged_df.log10_parity_two_label != np.log10(10000)) & (merged_df.log10_parity_two_label != np.log10(0))]
-    # # drop only the 0's
+    # merged_df = merged_df[
+    #     (merged_df.log10_parity_two_label != np.log10(10000)) & (merged_df.log10_parity_two_label != np.log10(0))]
+    # drop only the 0's
     # merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
 
     # if we are using merged_df, we have to split into feature and labels df again
     feature_df = merged_df.drop(labels=current_label, axis=1)
     label_df = merged_df[current_label]
-
     # # scale features beforehand:
     # sc = StandardScaler()
     # feature_df = sc.fit_transform(feature_df)
@@ -78,7 +79,7 @@ def regression_model_preprocessing(loaded_feature_df, loaded_label_df):
 
 def compare_model_to_features_with_family(model, preprocessed_feature_df, preprocessed_label_df):
     # add family as feature
-    features_with_family = add_family_as_feature(preprocessed_feature_df)
+    features_with_family = add_family_to_df(preprocessed_feature_df)
 
     # replace a family name with an arbitrary, but consistent, number
     features_with_family = string_to_numerical_feature_encoder(features_with_family)
@@ -125,24 +126,41 @@ def test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, prepr
 
 
 def cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
+    print(preprocessed_label_df.describe())
+
     # train and evaluate Random Forest
     model = RandomForestRegressor(random_state=42, verbose=1)
-    # model = MLPRegressor(random_state=42, max_iter=800)
+    # model = SVR()
+    # model = MLPRegressor(random_state=42)
+    # model = DecisionTreeRegressor(random_state=42)
+    # model = AdaBoostRegressor(random_state=42)
+    # model = VotingRegressor(estimators=[('rf',RandomForestRegressor(random_state=42)), ('mlp', MLPRegressor(random_state=42)), ('svc', SVR())])
+    # model = VotingRegressor(n_jobs=-1,estimators=[('rf1',RandomForestRegressor(random_state=42)), ('rf2',RandomForestRegressor(random_state=0)), ('rf3',RandomForestRegressor(random_state=5))])
 
+    # for R2-score
     cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df, cv=10, scoring='r2')
-    print("Base Features: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
-    
+    print("Base Features: %0.4f score with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
+
+    # for RMSE:
+    cv_scores = cross_val_score(model, preprocessed_feature_df, preprocessed_label_df, cv=10,
+                                scoring='neg_root_mean_squared_error')
+    print("Base Features: %0.4f RMSE with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
+
     # # interestingly, adding the family to the features barely improves our model
     # compare_model_to_features_with_family(model, preprocessed_feature_df, preprocessed_label_df)
 
     # # adding 'easy', 'medium', etc to the features as label makes regression a lot more accurate
     # # as expected, due to smaller search space
     # compare_model_to_features_with_category(model, preprocessed_feature_df, preprocessed_label_df)
-    
 
 
+# TODO: Merge preprocessing functions
 def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
-    current_label = ['all_families']
+    # # optional: add family as label
+    # loaded_label_df = add_family_to_df(loaded_label_df)
+
+    # choose current label
+    current_label = ['3-means_label']
 
     # to ensure we have a label on each feature
     merged_df = loaded_label_df[current_label].join(loaded_feature_df, how='left')
@@ -152,10 +170,11 @@ def classifier_model_preprocessing(loaded_feature_df, loaded_label_df):
     # if we are using merged_df, we have to split into feature and labels df again
     feature_df = merged_df.drop(labels=current_label, axis=1)
     label_df = merged_df[current_label]
+    # print(pd.DataFrame(label_df).describe())
 
-    # # scale features beforehand:
-    # sc = StandardScaler()
-    # feature_df = sc.fit_transform(feature_df)
+    # scale features beforehand:
+    sc = StandardScaler()
+    feature_df = sc.fit_transform(feature_df)
     #
     # # dimensionality reduction using a PCA:
     # pca = PCA(n_components=30)
@@ -261,11 +280,15 @@ def calc_hierarchical_clustering(feature_df, X_train, X_test, y_train, y_test):
 
 
 def cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
-    # # train Multi-layer Perceptron - don't forget to scale features first
-    # classifier = MLPClassifier(random_state=0, max_iter=900)
-
-    # train Random Forest
-    classifier = RandomForestClassifier(random_state=42, verbose=1)
+    # define model
+    # classifier = RandomForestClassifier(random_state=42, verbose=1)
+    classifier = MLPClassifier(random_state=42)
+    # classifier = SVC(random_state=42, verbose=1)
+    # classifier = AdaBoostClassifier(random_state=42)
+    # classifier = KNeighborsClassifier(4)
+    # classifier = DecisionTreeClassifier(random_state=42)
+    # classifier = VotingClassifier(estimators=[('rf',RandomForestClassifier(random_state=42)), ('mlp', MLPClassifier(random_state=42)), ('svc', SVC(random_state=42))])
+    # classifier = VotingClassifier(estimators=[('rf1',RandomForestClassifier(random_state=42)), ('rf2',RandomForestClassifier(random_state=0)), ('rf3',RandomForestClassifier(random_state=5))])
 
     # evaluate using cross validation
     cv_scores = model_selection.cross_val_score(classifier, preprocessed_feature_df,
@@ -276,7 +299,10 @@ def cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed
 def test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df):
     # fit and test using test & train split
     # train Random Forest
-    classifier = RandomForestClassifier(random_state=42)
+    # classifier = RandomForestClassifier(random_state=42)
+    # classifier = MLPClassifier(random_state=42)
+    classifier = MLPClassifier(random_state=42, solver='lbfgs', max_iter=238, learning_rate_init=0.6204719438877756,
+                               hidden_layer_sizes=(710, 710, 710))
 
     # first split into train and test
     X_train, X_test, y_train, y_test = train_test_split(preprocessed_feature_df, preprocessed_label_df,
@@ -285,13 +311,13 @@ def test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, prep
     y_pred = classifier.predict(X_test)
     print("Accuracy of the model with all features: %0.4f" % metrics.accuracy_score(y_test, y_pred))
 
-    # let's have a look at the false predictions
-    see_false_predictions(preprocessed_feature_df, y_test, y_pred)
-    # to calc and see permutation based importance - won't help us much due to correlations
-    calc_permutation_importance(preprocessed_feature_df, X_train, y_train, classifier)
-    # to calc and see hierarchical clustering based on spearman rank-order
-    # necessary to handle multi collinear features
-    calc_hierarchical_clustering(preprocessed_feature_df, X_train, X_test, y_train, y_test)
+    # # let's have a look at the false predictions
+    # see_false_predictions(preprocessed_feature_df, y_test, y_pred)
+    # # to calc and see permutation based importance - won't help us much due to correlations
+    # calc_permutation_importance(preprocessed_feature_df, X_train, y_train, classifier)
+    # # to calc and see hierarchical clustering based on spearman rank-order
+    # # necessary to handle multi collinear features
+    # calc_hierarchical_clustering(preprocessed_feature_df, X_train, X_test, y_train, y_test)
 
 
 def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df):
@@ -300,7 +326,7 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
     most_important_features = preprocessed_feature_df[np.intersect1d(preprocessed_feature_df.columns, most_important_feature_names)]
 
     # add family as feature
-    features_with_family = add_family_as_feature(most_important_features)
+    features_with_family = add_family_to_df(most_important_features)
 
     # replace a family name with an arbitrary, but consistent, number
     features_with_family = string_to_numerical_feature_encoder(features_with_family)
@@ -326,7 +352,7 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
         # row_res = {"features": comb_features, "r2_score": r2_score, "feature_importances_": clf.feature_importances_}
         # current_measure = "r2_score"
 
-        model = RandomForestRegressor(random_state=0, verbose=1)
+        # model = RandomForestRegressor(random_state=0, verbose=1)
         model = RandomForestClassifier(random_state=0, verbose=1)
         cv_scores = cross_val_score(model, X, preprocessed_label_df, cv=10)
         print("Base Features: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
@@ -346,26 +372,28 @@ def find_min_features_with_family(preprocessed_feature_df, preprocessed_label_df
     print(sorted_results)
 
     # # save test/train results - these allow us to measure permutation based feature importance
-    # sorted_results.to_csv(os.getcwd() + "/data/measured_data/test_train_scores_max_4_features.csv")
+    # sorted_results.to_csv(os.getcwd() + "/data/measured_data/extended_regression_cv_scores_max_5_features.csv")
 
     # save cv results
-    sorted_results.to_csv(os.getcwd() + "/data/measured_data/classification_cv_scores_max_4_features.csv")
+    sorted_results.to_csv(
+        os.getcwd() + "/data/measured_data/extended_family_classification_cv_scores_max_4_features.csv")
 
 
 def pipeline():
     loaded_feature_df, loaded_label_df = load_df()
 
-    # # if we want to use a regression model:
-    preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
-    with parallel_backend('threading', n_jobs=4):
-        cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    # if we want to use a regression model:
+    # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)
+    # print(pd.DataFrame(preprocessed_label_df).describe())
+    # with parallel_backend('threading', n_jobs=4):
+    #     cv_regression_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
     # test_train_regressor_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
-    # # if we want to use a classifier model:
-    # preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
-    # with parallel_backend('threading', n_jobs=4):
-    #     # cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
-    #     test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+    # if we want to use a classifier model:
+    preprocessed_feature_df, preprocessed_label_df = classifier_model_preprocessing(loaded_feature_df, loaded_label_df)
+    with parallel_backend('threading', n_jobs=4):
+        # cv_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
+        test_train_classifier_model_train_and_evaluate(preprocessed_feature_df, preprocessed_label_df)
 
     # find min features with instance-family given as feature
     # preprocessed_feature_df, preprocessed_label_df = regression_model_preprocessing(loaded_feature_df, loaded_label_df)

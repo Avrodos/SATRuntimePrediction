@@ -1,0 +1,32 @@
+  ,features                                                                                         ,cv_scores_mean     ,cv_std
+0 ,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality', 'family')",0.5413025119267437 ,0.055729966483348124
+1 ,"('#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality', 'family')"                        ,0.5360766767574716 ,0.060510803710731254
+2 ,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')"          ,0.5216292742212294 ,0.05784321025770516
+3 ,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality', 'family')"                        ,0.5146288503100431 ,0.07074800993371394
+4 ,"('#ConnectedComponents', '#Nodes', 'MeanDegreeCentrality', 'family')"                           ,0.5130843929972502 ,0.05095445617889643
+5 ,"('#Nodes', 'MeanDegreeCentrality', 'family')"                                                   ,0.5078452458640632 ,0.0529272478333651
+6 ,"('#Nodes', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')"                                  ,0.5051037696732094 ,0.05610993276466184
+7 ,"('#Nodes', 'EntropyDegreeCentrality', 'family')"                                                ,0.5019498162295836 ,0.0750386577814714
+8 ,"('#ConnectedComponents', 'EntropyDegreeCentrality', 'MeanDegreeCentrality', 'family')"          ,0.4986989334262885 ,0.05160342863261132
+9 ,"('EntropyDegreeCentrality', 'MeanDegreeCentrality', 'family')"                                  ,0.4918371532599452 ,0.05464383838368777
+10,"('#ConnectedComponents', '#Nodes', 'EntropyDegreeCentrality')"                                  ,0.4773257762416785 ,0.07520595038646097
+11,"('#ConnectedComponents', '#Nodes', 'MeanDegreeCentrality')"                                     ,0.47430566854101774,0.04563500671209626
+12,"('#ConnectedComponents', 'MeanDegreeCentrality', 'family')"                                     ,0.47259894416355086,0.04566089792395706
+13,"('#ConnectedComponents', 'EntropyDegreeCentrality', 'MeanDegreeCentrality')"                    ,0.4573857906287649 ,0.04383408302125804
+14,"('MeanDegreeCentrality', 'family')"                                                             ,0.444245245529152  ,0.04455036861299826
+15,"('#ConnectedComponents', '#Nodes', 'family')"                                                   ,0.4373630721646915 ,0.061554352930101544
+16,"('#Nodes', 'MeanDegreeCentrality')"                                                             ,0.43274255251790245,0.04886328221249218
+17,"('#Nodes', 'EntropyDegreeCentrality')"                                                          ,0.4228073056805024 ,0.08882846348523388
+18,"('#ConnectedComponents', 'EntropyDegreeCentrality', 'family')"                                  ,0.42262108411305005,0.07273672838913216
+19,"('EntropyDegreeCentrality', 'MeanDegreeCentrality')"                                            ,0.41305170855823625,0.05390408057804755
+20,"('#Nodes', 'family')"                                                                           ,0.3981774791560831 ,0.07847365551756422
+21,"('EntropyDegreeCentrality', 'family')"                                                          ,0.39648057551058796,0.08613183444586608
+22,"('#ConnectedComponents', 'EntropyDegreeCentrality')"                                            ,0.3343418085946059 ,0.060630229413015296
+23,"('#ConnectedComponents', 'family')"                                                             ,0.32156246875803124,0.05334089989352597
+24,"('#ConnectedComponents', 'MeanDegreeCentrality')"                                               ,0.3108982302931862 ,0.04142635875187787
+25,"('#ConnectedComponents', '#Nodes')"                                                             ,0.2736664109575127 ,0.05318133464523802
+26,"('family',)"                                                                                    ,0.23182025758583932,0.04717732498167753
+27,"('MeanDegreeCentrality',)"                                                                      ,0.1610796164507633 ,0.057607934850294355
+28,"('EntropyDegreeCentrality',)"                                                                   ,0.11680274404925428,0.08105008799194927
+29,"('#ConnectedComponents',)"                                                                      ,0.08460964957659674,0.03314536055916556
+30,"('#Nodes',)"                                                                                    ,0.03761802520988664,0.03877905833956641

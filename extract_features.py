@@ -201,27 +201,27 @@ def calculate_community(given_graph):
     entropy_community_size = calculate_entropy(np_array_community_size)
     time_community_size = time_communities + time.process_time() - time_start
 
-    # Graph Imbalance
+    # Graph Imbalance - TODO: clustering feature
     time_start = time.process_time()
     imbalance = nk.community.GraphClusteringTools().getImbalance(communities)
     time_imbalance = time_communities + time.process_time() - time_start
 
-    # Check whether community partition is a proper clustering
+    # Check whether community partition is a proper clustering - TODO: clustering feature
     time_start = time.process_time()
     is_proper_clustering = nk.community.GraphClusteringTools().isProperClustering(given_graph, communities)
     time_is_proper_clustering = time_communities + time.process_time() - time_start
 
-    # Check whether community partition is a singleton clustering
+    # Check whether community partition is a singleton clustering - TODO: clustering feature
     time_start = time.process_time()
     is_singleton_clustering = nk.community.GraphClusteringTools().isSingletonClustering(given_graph, communities)
     time_is_singleton_clustering = time_communities + time.process_time() - time_start
 
-    # Check whether community partition is a One Clustering
+    # Check whether community partition is a One Clustering - TODO: clustering feature
     time_start = time.process_time()
     is_one_clustering = nk.community.GraphClusteringTools().isOneClustering(given_graph, communities)
     time_is_one_clustering = time_communities + time.process_time() - time_start
 
-    # Edge cut = total weight of intercommunity edges, Edge cut fraction = the fraction compared to total num of edges
+    # Edge cut = total weight of intercommunity edges, Edge cut fraction = the fraction compared to total num of edges - TODO: general graph feature
     time_start = time.process_time()
     edge_cut = nk.community.EdgeCut().getQuality(communities, given_graph)
     edge_cut_fraction = edge_cut / given_graph.numberOfEdges()
@@ -232,12 +232,12 @@ def calculate_community(given_graph):
     modularity = nk.community.Modularity().getQuality(communities, given_graph)
     time_modularity = time_communities + time.process_time() - time_start
 
-    # Hub Dominance
+    # Hub Dominance - TODO: clustering feature
     time_start = time.process_time()
     hub_dominance = nk.community.HubDominance().getQuality(communities, given_graph)
     time_hub_dominance = time_communities + time.process_time() - time_start
 
-    # Intrapartition Density
+    # Intrapartition Density - TODO: clustering feature
     time_start = time.process_time()
     global_intrapartition_density = nk.community.IntrapartitionDensity(given_graph, communities).run().getGlobal()
     time_intrapartition_density = time_communities + time.process_time() - time_start

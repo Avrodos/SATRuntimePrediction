@@ -7,7 +7,9 @@ import numpy as np
 # first argument should be path to feature file, second argument is path to label file
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import RandomizedSearchCV, cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
@@ -24,8 +26,8 @@ def load_df():
     merged_df = label_df.join(feature_df, how='left')
     merged_df.dropna(inplace=True)
     # to drop timeouts and 0sec instances
-    merged_df = merged_df[(merged_df.parity_two_label != 10000) & (merged_df.parity_two_label != 0)]
-    # merged_df = merged_df[(merged_df.min_label != 0)]
+    # merged_df = merged_df[(merged_df.parity_two_label != 10000) & (merged_df.parity_two_label != 0)]
+    # merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
 
     # if we are using merged_df, we have to split into feature and labels df again
     feature_df = merged_df.drop(merged_df.columns[0:len(label_df.columns)], axis=1)
@@ -36,8 +38,23 @@ def load_df():
 # first argument should be path to feature file, second argument is path to label file
 if __name__ == '__main__':
     # define random seed first
-    np.random.seed(0)
+    np.random.seed(42)
     loaded_feature_df, loaded_label_df = load_df()
+
+    # first split into train and test
+    X_train, X_test, y_train, y_test = train_test_split(loaded_feature_df, loaded_label_df,
+                                                        random_state=42)
+
+    # First create the base model to tune
+    # model = RandomForestClassifier(random_state=42)
+    # model = RandomForestRegressor(random_state=42)
+    model = RandomForestClassifier(random_state=42, n_estimators=1600, min_samples_split=5, min_samples_leaf=2,
+                                   max_features='auto', max_depth=100)
+    # build pipeline
+    pipeline = Pipeline(steps=[
+        ('scaler', StandardScaler()),
+        ('model', model)
+    ])
 
     # first we define the random grid
     # Number of trees in random forest
@@ -51,54 +68,30 @@ if __name__ == '__main__':
     min_samples_split = [2, 5, 10]
     # Minimum number of samples required at each leaf node
     min_samples_leaf = [1, 2, 4]
-    # Method of selecting samples for training each tree
-    bootstrap = [True, False]  # Create the random grid
-    random_grid = {'n_estimators': n_estimators,
-                   'max_features': max_features,
-                   'max_depth': max_depth,
-                   'min_samples_split': min_samples_split,
-                   'min_samples_leaf': min_samples_leaf,
-                   'bootstrap': bootstrap}
+    random_grid = {'model__n_estimators': n_estimators,
+                   'model__max_features': max_features,
+                   'model__max_depth': max_depth,
+                   'model__min_samples_split': min_samples_split,
+                   'model__'
+                   'min_samples_leaf': min_samples_leaf}
 
-    # Use the random grid to search for best hyperparameters
-    # First create the base model to tune
-    rf = RandomForestClassifier()
-    # Random search of parameters, using 3 fold cross validation,
-    # search across 100 different combinations, and use all available cores
-    rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid, n_iter=100, cv=3, verbose=2,
-                                   random_state=0, n_jobs=-1)  # Fit the random search model
-    rf_random.fit(loaded_feature_df, loaded_label_df)
+    # # Use the random grid to search for best hyperparameters
+    # # Random search of parameters, using k-fold cross validation,
+    # # search across n_iter different combinations, and use all available cores
+    #
+    # random_model = RandomizedSearchCV(estimator=pipeline, param_distributions=random_grid, n_iter=50, cv=3, verbose=2,
+    #                                   random_state=42, n_jobs=4)  # Fit the random search model
+    # random_model.fit(X_train, y_train)
+    #
+    # # results of our search:
+    # print(random_model.best_params_)
+    #
+    # # for more in depth inspection
+    # scores_df = pd.DataFrame(random_model.cv_results_)
+    # scores_df = scores_df.sort_values(by=['rank_test_score']).reset_index(drop='index')
+    # print(scores_df)
+    # scores_df.to_csv(os.getcwd() + '/data/measured_data/rf_par2_hyperparam_optimization_results.csv')
 
-    # results of our search:
-    print(rf_random.best_params_)
-
-    # now compare random search results to base model:
-    base_model = RandomForestClassifier(random_state=0)
-    # cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
-    cv_scores = cross_val_score(base_model, loaded_feature_df, loaded_label_df, cv=10)
-    print("Base Model: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
-
-    # these values are based on random search results
-    # best_random = RandomForestClassifier(random_state=0, n_estimators=400, min_samples_split=5, min_samples_leaf=1, max_features='sqrt', max_depth=60, bootstrap=True)
-    # best_random = RandomForestRegressor(random_state=0, n_estimators=800, min_samples_split=2, min_samples_leaf=1, max_features='sqrt', max_depth=90, bootstrap=True)
-    # best_random = RandomForestRegressor(random_state=0, n_estimators=400, min_samples_split=2, min_samples_leaf=1,
-    #                                     max_features='sqrt', max_depth=None, bootstrap=True)
-    best_random = RandomForestClassifier(random_state=0)
-    # cv_scores = cross_val_score(best_random, loaded_feature_df, loaded_label_df, cv=10, scoring='neg_root_mean_squared_error')
-    sel_feature_list = ['#Nodes', '#Edges', '#ConnectedComponents', 'MeanDegreeCentrality',
-                        'MinDegreeCentrality', 'MaxDegreeCentrality', 'VarDegreeCentrality',
-                        'EntropyDegreeCentrality', 'DegreeAssortativity', 'Centralization',
-                        'MeanEigenvectorCentrality', 'MinEigenvectorCentrality',
-                        'MaxEigenvectorCentrality', 'VarEigenvectorCentrality',
-                        'EntropyEigenvectorCentrality', 'MaxPageRank', 'VarPageRank',
-                        'EntropyPageRank', 'MeanKatzCentrality', 'MinKatzCentrality',
-                        'MaxKatzCentrality', 'VarKatzCentrality', 'EntropyKatzCentrality',
-                        'MeanBetweennessCentrality', 'MinBetweennessCentrality',
-                        'MaxBetweennessCentrality', 'EntropyBetweennessCentrality',
-                        'MeanCommunitySize', 'MinCommunitySize', 'MaxCommunitySize',
-                        'VarCommunitySize', 'EntropyCommunitySize', 'ClusterImbalance',
-                        'IsProperClustering', 'IsSingletonClustering', 'IsOneClustering',
-                        'EdgeCut', 'EdgeCutFraction', 'Modularity', 'HubDominance']
-    sel_feature_df = loaded_feature_df[loaded_feature_df.columns.intersection(sel_feature_list)]
-    cv_scores = cross_val_score(best_random, sel_feature_df, loaded_label_df, cv=10)
-    print("Optimized Model: %0.4f accuracy with a standard deviation of %0.4f" % (cv_scores.mean(), cv_scores.std()))
+    # test the hyper params
+    pipeline.fit(X_train, y_train)
+    print("Accuracy of the model with all features: %0.4f" % pipeline.score(X_test, y_test))
