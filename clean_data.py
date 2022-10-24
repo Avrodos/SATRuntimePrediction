@@ -14,6 +14,14 @@ def main():
     # current working directory
     cwd = os.getcwd()
 
+    # used to split the two merged data sets
+    df = pd.read_csv(PATH_DF, index_col=0)
+    df['CaDiCaL_DVDL_V1'].replace('               ', np.nan, inplace=True)
+    df.dropna(subset='CaDiCaL_DVDL_V1', inplace=True)
+    print(df.columns.get_loc('kissat_relaxed'))
+    df.drop(df.iloc[:, 28:], axis=1, inplace=True)
+    df.to_csv(cwd + "/data/runtimes/only_new_solver_runtimes.csv")
+
     # remove suffixes from feature df
     df = pd.read_csv(PATH_DF)
     df["hash"] = df['ID'].str.split('-').str[0]

@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans
 RUNTIME_LABELS_PATH: Final[str] = sys.argv[1]
 # comment out if not needed
 ALL_RUNTIMES_PATH: Final[str] = sys.argv[2]
-LABEL_FILE_NAME: Final[str] = 'runtime_labels.csv'
+LABEL_FILE_NAME: Final[str] = 'only_new_runtime_labels.csv'
 
 
 def write_to_csv(label_df):
@@ -34,13 +34,13 @@ def read_runtimes_from_csv():
 
 
 def add_family_label():
-    label_df = read_labels_from_csv()
-    # # read and merge family labels
-    # family_df = pd.read_csv(os.getcwd() + "/data/meta_data/hash_to_family_mapping.csv")
-    # family_df.set_index('hash', inplace=True)
-    # merged_df = label_df.join(family_df, how='left')
+    label_df = pd.read_csv(os.getcwd() + "/data/runtimes/only_new_runtime_labels.csv", index_col=0)
+    # read and merge family labels
+    family_df = pd.read_csv(os.getcwd() + "/data/meta_data/hash_to_family_mapping.csv")
+    family_df.set_index('hash', inplace=True)
+    merged_df = label_df.join(family_df, how='left')
     # family_counts = merged_df['family'].value_counts()
-    merged_df = label_df
+    # merged_df = label_df
 
     # # we will keep the three most common family labels and replace all others with 'other'
     # most_common_families = ['cryptography', 'bitvector', 'antibandwidth']
@@ -48,12 +48,12 @@ def add_family_label():
     # family_counts = merged_df['four_families'].value_counts()
 
     # group all families with less than threshold occurences as 'other'
-    threshold = 10
-    col = 'all_families_threshold_' + str(threshold)
-    merged_df[col] = merged_df['all_families']
-    merged_df.loc[merged_df[col].value_counts()[merged_df[col]].values < 10, col] = "other "
+    # threshold = 10
+    # col = 'all_families_threshold_' + str(threshold)
+    # merged_df[col] = merged_df['all_families']
+    # merged_df.loc[merged_df[col].value_counts()[merged_df[col]].values < 10, col] = "other "
 
-    family_counts = merged_df[col].value_counts()
+    family_counts = merged_df['family'].value_counts()
     print("Number of families:")
     print(family_counts.shape[0])
     print("Percentage of each family: ")
@@ -77,6 +77,7 @@ def calculate_timeout_label():
 
 def calculate_parity_two():
     label_df = read_labels_from_csv()
+    label_df = pd.DataFrame()
     runtime_df = read_runtimes_from_csv()
 
     # a timeout happens at 5000s. parity 2 doubles its weight to punish a timeout
@@ -180,11 +181,12 @@ def calculate_time_mean_per_features():
 
 
 def kmeans_cluster_labels():
-    label_df = read_labels_from_csv()
-    current_label = 'parity_two_label'
+    # label_df = read_labels_from_csv()
+    label_df = pd.read_csv(os.getcwd() + "/data/runtimes/only_new_runtime_labels.csv", index_col=0)
+    current_label = 'log10_parity_two_label'
     # number of clusters
     k = 3
-    new_label_name = f"{k}-means_label"
+    new_label_name = f"{k}-means_label_" + current_label
     kmeans = KMeans(n_clusters=k, random_state=42)
     kmeans_df = pd.DataFrame(label_df[current_label])
     # we have to drop nan's
@@ -246,4 +248,4 @@ def find_optimal_num_of_clusters():
 
 
 if __name__ == '__main__':
-    find_optimal_num_of_clusters()
+    kmeans_cluster_labels()
