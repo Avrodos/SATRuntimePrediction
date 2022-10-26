@@ -1,5 +1,6 @@
 # a lot of code from this script has been taken from:
 # https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74
+import os
 import sys
 from typing import Final
 
@@ -7,7 +8,7 @@ import numpy as np
 # first argument should be path to feature file, second argument is path to label file
 import pandas as pd
 import scipy
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
@@ -16,7 +17,8 @@ PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
 
 
-# taken from: https://stackoverflow.com/questions/52032019/sklearn-mlp-classifier-hidden-layers-optimization-randomizedsearchcv
+# inspired from:
+# https://stackoverflow.com/questions/52032019/sklearn-mlp-classifier-hidden-layers-optimization-randomizedsearchcv
 class RandIntMatrix(object):
     def __init__(self, low, high, shape=(1)):
         self.low = low
@@ -38,8 +40,9 @@ def load_df():
     # remove nan's
     merged_df = label_df.join(feature_df, how='left')
     merged_df.dropna(inplace=True)
-    # to drop timeouts and 0sec instances
+    # # to drop timeouts and 0sec instances
     # merged_df = merged_df[(merged_df.parity_two_label != 10000) & (merged_df.parity_two_label != 0)]
+    # to only drop 0sec instances
     merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
 
     # if we are using merged_df, we have to split into feature and labels df again
@@ -57,12 +60,11 @@ if __name__ == '__main__':
     # first split into train and test
     X_train, X_test, y_train, y_test = train_test_split(loaded_feature_df, loaded_label_df,
                                                         random_state=42)
-    # First create the base model to tune
+    # First decide on the model to tune
     # model = SVC(random_state=42)
-    model = SVR()
-    # enter hyper params here
-    # model = SVR( C=27.211868261923073, cache_size=500, gamma=0.2328445680867632,
-    #             kernel='rbf', max_iter=1310)
+    # model = SVR()
+    model = SVR( C=27.211868261923073, cache_size=500, gamma=0.2328445680867632,
+                kernel='rbf', max_iter=1310)
 
     # build pipeline
     pipeline = Pipeline(steps=[
@@ -89,22 +91,23 @@ if __name__ == '__main__':
                    'model__kernel': ['rbf'],
                    }
 
-    # # Use the random grid to search for best hyperparameters
-    # # Random search of parameters, using k-fold cross validation,
-    # # search across n_iter different combinations, and use all available cores
-    #
-    # random_model = RandomizedSearchCV(estimator=pipeline, param_distributions=random_grid, n_iter=200, cv=3, verbose=2,
-    #                                   random_state=42, n_jobs=4)  # Fit the random search model
-    # random_model.fit(X_train, y_train)
-    #
-    # # results of our search:
-    # print(random_model.best_params_)
-    #
-    # # for more in depth inspection
-    # scores_df = pd.DataFrame(random_model.cv_results_)
-    # scores_df = scores_df.sort_values(by=['rank_test_score']).reset_index(drop='index')
-    # print(scores_df)
-    # scores_df.to_csv(os.getcwd() +'/data/measured_data/svm_log10par2_hyperparam_optimization_results.csv')
+    # Use the random grid to search for best hyperparameters
+    # Random search of parameters, using k-fold cross validation,
+    # search across n_iter different combinations, and use all available cores
+
+    random_model = RandomizedSearchCV(estimator=pipeline, param_distributions=random_grid, n_iter=200, cv=3, verbose=2,
+                                      random_state=42, n_jobs=4)
+    # Fit the random search model
+    random_model.fit(X_train, y_train)
+
+    # results of our search:
+    print(random_model.best_params_)
+
+    # for more in depth inspection
+    scores_df = pd.DataFrame(random_model.cv_results_)
+    scores_df = scores_df.sort_values(by=['rank_test_score']).reset_index(drop='index')
+    print(scores_df)
+    scores_df.to_csv(os.getcwd() + '/data/measured_data/svm_log10par2_hyperparam_optimization_results.csv')
 
     # test the hyper params
     pipeline.fit(X_train, y_train)

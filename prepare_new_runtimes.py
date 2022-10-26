@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 
 
@@ -25,12 +26,12 @@ def kmeans_cluster_labels():
 
     # we have to merge due to the drops
     merged_df = label_df.join(kmeans_df, how='left')
-    # # plot our clusters
-    # frame = plt.scatter(merged_df[current_label], merged_df.index, c=merged_df[new_label_name])
-    # frame.axes.get_yaxis().set_visible(False)
-    # plt.title(f'{k}-Means Clustering of Average Par-2 Time for Labelling')
-    # plt.xlabel('Average Par-2 Time of Each Instance')
-    # plt.show()
+    # plot our clusters
+    frame = plt.scatter(merged_df[current_label], merged_df.index, c=merged_df[new_label_name])
+    frame.axes.get_yaxis().set_visible(False)
+    plt.title(f'{k}-Means Clustering of Average Par-2 Time for Labelling')
+    plt.xlabel('Average Par-2 Time of Each Instance')
+    plt.show()
 
     return merged_df
 
@@ -47,8 +48,6 @@ def calculate_new_labels():
 
     # calculate log of par2
     runtime_df['log10_parity_two_label'] = np.log10(runtime_df['parity_two_label'])
-
-    # TODO: categorical KNN labels
 
     # drop non-label columns
     runtime_df = runtime_df[['parity_two_label', 'log10_parity_two_label']]
@@ -70,27 +69,29 @@ def calculate_new_labels():
 
 
 if __name__ == '__main__':
-    # # load and merge both runtime files
-    # all_new_runtimes_df = pd.read_csv('data/instances/prepared-anni-seq.csv', index_col=0)
-    # all_new_runtimes_df.sort_index(inplace=True)
-    # old_runtimes_df = pd.read_csv('data/runtimes/solver_runtimes.csv', index_col=0)
-    # old_runtimes_df.sort_index(inplace=True)
-    # merged_df = all_new_runtimes_df.join(old_runtimes_df, how='outer')
-    #
-    # # remove non-runtime columns
-    # merged_df.drop(merged_df.iloc[:, 0:4], inplace=True, axis=1)
-    # merged_df.to_csv('data/runtimes/extended_solver_runtimes.csv')
-    #
-    # # calculate new labels
-    # merged_df = calculate_new_labels()
-    #
-    # # split into two df's again and save
-    # runtime_df = merged_df[['parity_two_label', 'log10_parity_two_label']]
-    # feature_df = merged_df.drop(['parity_two_label', 'log10_parity_two_label'], axis=1)
-    #
-    # # save
-    # runtime_df.to_csv('data/runtimes/extended_runtime_labels.csv')
-    # feature_df.to_csv('data/measured_data/extended_SAT_features.csv')
+    # comment out/in the steps you need:
+
+    # load and merge both runtime files
+    all_new_runtimes_df = pd.read_csv('data/instances/prepared-anni-seq.csv', index_col=0)
+    all_new_runtimes_df.sort_index(inplace=True)
+    old_runtimes_df = pd.read_csv('data/runtimes/solver_runtimes.csv', index_col=0)
+    old_runtimes_df.sort_index(inplace=True)
+    merged_df = all_new_runtimes_df.join(old_runtimes_df, how='outer')
+
+    # remove non-runtime columns
+    merged_df.drop(merged_df.iloc[:, 0:4], inplace=True, axis=1)
+    merged_df.to_csv('data/runtimes/extended_solver_runtimes.csv')
+
+    # calculate new labels
+    merged_df = calculate_new_labels()
+
+    # split into two df's again and save
+    runtime_df = merged_df[['parity_two_label', 'log10_parity_two_label']]
+    feature_df = merged_df.drop(['parity_two_label', 'log10_parity_two_label'], axis=1)
+
+    # save
+    runtime_df.to_csv('data/runtimes/extended_runtime_labels.csv')
+    feature_df.to_csv('data/measured_data/extended_SAT_features.csv')
 
     # k means label
     label_df = kmeans_cluster_labels()

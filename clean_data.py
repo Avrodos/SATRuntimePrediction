@@ -7,10 +7,13 @@ import numpy as np
 import pandas as pd
 
 PATH_DF: Final[str] = sys.argv[1]
-# PATH_LABELS: Final[str] = sys.argv[2]
+# comment out if not needed
+PATH_LABELS: Final[str] = sys.argv[2]
 
 
 def main():
+    # comment out/in the steps you need:
+
     # current working directory
     cwd = os.getcwd()
 

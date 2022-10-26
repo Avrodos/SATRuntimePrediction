@@ -1,5 +1,6 @@
 # a lot of code from this script has been taken from:
 # https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74
+import os
 import sys
 from typing import Final
 
@@ -7,7 +8,7 @@ import numpy as np
 # first argument should be path to feature file, second argument is path to label file
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -25,8 +26,9 @@ def load_df():
     # remove nan's
     merged_df = label_df.join(feature_df, how='left')
     merged_df.dropna(inplace=True)
-    # to drop timeouts and 0sec instances
+    # # to drop timeouts and 0sec instances
     # merged_df = merged_df[(merged_df.parity_two_label != 10000) & (merged_df.parity_two_label != 0)]
+    # to only drop 0sec instances
     # merged_df = merged_df[(merged_df.log10_parity_two_label != np.log10(0))]
 
     # if we are using merged_df, we have to split into feature and labels df again
@@ -45,7 +47,7 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(loaded_feature_df, loaded_label_df,
                                                         random_state=42)
 
-    # First create the base model to tune
+    # First decide on the model to tune
     # model = RandomForestClassifier(random_state=42)
     # model = RandomForestRegressor(random_state=42)
     model = RandomForestClassifier(random_state=42, n_estimators=1600, min_samples_split=5, min_samples_leaf=2,
@@ -75,22 +77,23 @@ if __name__ == '__main__':
                    'model__'
                    'min_samples_leaf': min_samples_leaf}
 
-    # # Use the random grid to search for best hyperparameters
-    # # Random search of parameters, using k-fold cross validation,
-    # # search across n_iter different combinations, and use all available cores
-    #
-    # random_model = RandomizedSearchCV(estimator=pipeline, param_distributions=random_grid, n_iter=50, cv=3, verbose=2,
-    #                                   random_state=42, n_jobs=4)  # Fit the random search model
-    # random_model.fit(X_train, y_train)
-    #
-    # # results of our search:
-    # print(random_model.best_params_)
-    #
-    # # for more in depth inspection
-    # scores_df = pd.DataFrame(random_model.cv_results_)
-    # scores_df = scores_df.sort_values(by=['rank_test_score']).reset_index(drop='index')
-    # print(scores_df)
-    # scores_df.to_csv(os.getcwd() + '/data/measured_data/rf_par2_hyperparam_optimization_results.csv')
+    # Use the random grid to search for best hyperparameters
+    # Random search of parameters, using k-fold cross validation,
+    # search across n_iter different combinations, and use four cores
+
+    random_model = RandomizedSearchCV(estimator=pipeline, param_distributions=random_grid, n_iter=200, cv=3, verbose=2,
+                                      random_state=42, n_jobs=4)
+    # Fit the random search model
+    random_model.fit(X_train, y_train)
+
+    # results of our search:
+    print(random_model.best_params_)
+
+    # for more in depth inspection
+    scores_df = pd.DataFrame(random_model.cv_results_)
+    scores_df = scores_df.sort_values(by=['rank_test_score']).reset_index(drop='index')
+    print(scores_df)
+    scores_df.to_csv(os.getcwd() + '/data/measured_data/rf_par2_hyperparam_optimization_results.csv')
 
     # test the hyper params
     pipeline.fit(X_train, y_train)

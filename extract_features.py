@@ -85,7 +85,7 @@ def calculate_centrality(given_graph):
     centralization = deg_cen.centralization()
     time_centralization = time.process_time() - time_start
 
-    # also takes too long
+    # #  Commented out for scaled up data set, as it is an outlier regarding extraction time
     # # Eigenvector Centrality
     # time_start = time.process_time()
     # eigenvector_cen = nk.centrality.EigenvectorCentrality(given_graph)
@@ -201,27 +201,27 @@ def calculate_community(given_graph):
     entropy_community_size = calculate_entropy(np_array_community_size)
     time_community_size = time_communities + time.process_time() - time_start
 
-    # Graph Imbalance - TODO: clustering feature
+    # Graph Imbalance
     time_start = time.process_time()
     imbalance = nk.community.GraphClusteringTools().getImbalance(communities)
     time_imbalance = time_communities + time.process_time() - time_start
 
-    # Check whether community partition is a proper clustering - TODO: clustering feature
+    # Check whether community partition is a proper clustering
     time_start = time.process_time()
     is_proper_clustering = nk.community.GraphClusteringTools().isProperClustering(given_graph, communities)
     time_is_proper_clustering = time_communities + time.process_time() - time_start
 
-    # Check whether community partition is a singleton clustering - TODO: clustering feature
+    # Check whether community partition is a singleton clustering
     time_start = time.process_time()
     is_singleton_clustering = nk.community.GraphClusteringTools().isSingletonClustering(given_graph, communities)
     time_is_singleton_clustering = time_communities + time.process_time() - time_start
 
-    # Check whether community partition is a One Clustering - TODO: clustering feature
+    # Check whether community partition is a One Clustering
     time_start = time.process_time()
     is_one_clustering = nk.community.GraphClusteringTools().isOneClustering(given_graph, communities)
     time_is_one_clustering = time_communities + time.process_time() - time_start
 
-    # Edge cut = total weight of intercommunity edges, Edge cut fraction = the fraction compared to total num of edges - TODO: general graph feature
+    # Edge cut = total weight of intercommunity edges, Edge cut fraction = the fraction compared to total num of edges
     time_start = time.process_time()
     edge_cut = nk.community.EdgeCut().getQuality(communities, given_graph)
     edge_cut_fraction = edge_cut / given_graph.numberOfEdges()
@@ -232,12 +232,12 @@ def calculate_community(given_graph):
     modularity = nk.community.Modularity().getQuality(communities, given_graph)
     time_modularity = time_communities + time.process_time() - time_start
 
-    # Hub Dominance - TODO: clustering feature
+    # Hub Dominance
     time_start = time.process_time()
     hub_dominance = nk.community.HubDominance().getQuality(communities, given_graph)
     time_hub_dominance = time_communities + time.process_time() - time_start
 
-    # Intrapartition Density - TODO: clustering feature
+    # Intrapartition Density
     time_start = time.process_time()
     global_intrapartition_density = nk.community.IntrapartitionDensity(given_graph, communities).run().getGlobal()
     time_intrapartition_density = time_communities + time.process_time() - time_start
@@ -384,10 +384,10 @@ def extract_features(current_id, graph, time_read_graph=0):
     # clustering coefficients
     clustering_features, time_clustering_features = calculate_clustering(graph)
 
-    # graph diameters - currently takes too long
+    # # graph diameters - currently takes too long
     # diameter_features, time_diameter_features = calculate_diameters(graph)
 
-    # small-world measures - currently takes too long
+    # # small-world measures - currently takes too long
     # small_world_features, time_small_world_features = calculate_small_world(graph)
 
     # put it all into corresponding dataframes

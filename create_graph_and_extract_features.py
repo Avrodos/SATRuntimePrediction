@@ -1,4 +1,4 @@
-import gzip
+import lzma
 import math
 import multiprocessing
 import multiprocessing as mp
@@ -7,7 +7,7 @@ import shutil
 import sys
 import time
 from typing import Final
-import lzma
+
 import networkit as nk
 import pandas as pd
 
@@ -18,6 +18,8 @@ FEATURE_OUTPUT_DIR: Final[str] = 'data/measured_data/'
 FEATURE_FILE_ENDING: Final[str] = '_features'
 TIME_FILE_ENDING: Final[str] = '_time'
 
+# this file combines the graph creation and feature extraction process into one big step.
+# prevents the huge memory consumption that comes with saving the created graphs on the disc.
 
 def create_vig_from_file(path: str):
     with open(path) as file:

@@ -8,7 +8,9 @@ from joblib import parallel_backend
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 PATH_FEATURES: Final[str] = sys.argv[1]
 PATH_LABELS: Final[str] = sys.argv[2]
@@ -90,11 +92,11 @@ def pipeline():
                 runtime_y_train = df_sliced_dict_train[family][CURRENT_RUNTIME_LABEL[0]]
                 # we are using a random forest regression
                 model = RandomForestClassifier(random_state=42, verbose=1)
-                # # if we use a model that needs scaling/pipeline based fittig:
-                # model = Pipeline([
-                #     ('scaling', StandardScaler()),
-                #     ('classification', MLPClassifier(random_state=42, max_iter=500))
-                #     ])
+                # if we use a model that needs scaling/pipeline based fittig:
+                model = Pipeline([
+                    ('scaling', StandardScaler()),
+                    ('classification', MLPClassifier(random_state=42, max_iter=500))
+                    ])
                 model.fit(runtime_X_train, runtime_y_train)
                 family_specific_models[family] = model
             else:

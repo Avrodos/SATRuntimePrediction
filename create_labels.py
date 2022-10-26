@@ -34,24 +34,24 @@ def read_runtimes_from_csv():
 
 
 def add_family_label():
-    label_df = pd.read_csv(os.getcwd() + "/data/runtimes/only_new_runtime_labels.csv", index_col=0)
+    label_df = read_labels_from_csv()
     # read and merge family labels
     family_df = pd.read_csv(os.getcwd() + "/data/meta_data/hash_to_family_mapping.csv")
     family_df.set_index('hash', inplace=True)
     merged_df = label_df.join(family_df, how='left')
-    # family_counts = merged_df['family'].value_counts()
-    # merged_df = label_df
+    family_counts = merged_df['family'].value_counts()
+    merged_df = label_df
 
-    # # we will keep the three most common family labels and replace all others with 'other'
-    # most_common_families = ['cryptography', 'bitvector', 'antibandwidth']
-    # merged_df['four_families'] = np.where(merged_df['family'].isin(most_common_families), merged_df['family'], 'other')
-    # family_counts = merged_df['four_families'].value_counts()
+    # we will keep the three most common family labels and replace all others with 'other'
+    most_common_families = ['cryptography', 'bitvector', 'antibandwidth']
+    merged_df['four_families'] = np.where(merged_df['family'].isin(most_common_families), merged_df['family'], 'other')
+    family_counts = merged_df['four_families'].value_counts()
 
     # group all families with less than threshold occurences as 'other'
-    # threshold = 10
-    # col = 'all_families_threshold_' + str(threshold)
-    # merged_df[col] = merged_df['all_families']
-    # merged_df.loc[merged_df[col].value_counts()[merged_df[col]].values < 10, col] = "other "
+    threshold = 10
+    col = 'all_families_threshold_' + str(threshold)
+    merged_df[col] = merged_df['all_families']
+    merged_df.loc[merged_df[col].value_counts()[merged_df[col]].values < 10, col] = "other "
 
     family_counts = merged_df['family'].value_counts()
     print("Number of families:")
@@ -181,8 +181,7 @@ def calculate_time_mean_per_features():
 
 
 def kmeans_cluster_labels():
-    # label_df = read_labels_from_csv()
-    label_df = pd.read_csv(os.getcwd() + "/data/runtimes/only_new_runtime_labels.csv", index_col=0)
+    label_df = read_labels_from_csv()
     current_label = 'log10_parity_two_label'
     # number of clusters
     k = 3
@@ -248,4 +247,5 @@ def find_optimal_num_of_clusters():
 
 
 if __name__ == '__main__':
+    # change this call to the label you want to create
     kmeans_cluster_labels()
